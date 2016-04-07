@@ -1,0 +1,61 @@
+Author: Yuzhuo Sun(ys684)
+
+This is the project file for CS5300 project 1a 
+This project implements session management
+The operation is supported in http://localhost:8080/CS5300Project1/session URL
+
+URL mapping
+----------------------------------------------------------
+GET   http://localhost:8080/CS5300Project1/session    render a new session or refresh the current session
+POST  http://localhost:8080/CS5300Project1/session    replace button pressed: replace the message in current session
+POST  http://localhost:8080/CS5300Project1/session    logout button pressed: redirect to the logout page and terminate current session
+
+
+Implementation Structure
+--------------------------------------------------------------------------------------------------------------------
+The project is implemented by two jsp file as follow:
+1, index.jsp: mapped to /session url to render new session, refresh page, replace session message and do logout operation
+2, logout.jsp: a logout page once a user is loggged out
+
+There are also two java files in the backend:
+1, SessionServlet.java to manage the session, the class extends HttpServlet interface,
+thus implenments the doGet() and doPost() method. The doGet() method handles session initialization and session refresh;
+the doPost() method handles logout and replace message operation. This class also contains helper method in support of the doGet()
+and doPost() method described above.
+2, Session.java, a java bean to construct a session. It wraps the following fields inside of this class: sessionID, versionNumber,
+message, expireTime and createTime.
+
+
+Cookie format
+--------------------------------------------------------------------------------------------------------------------
+The cookie in this implementation use String "cs5300project1" as its key; the value consists a unique session ID generated from UUID and 
+a version number seperated by "/".
+
+
+Session design
+--------------------------------------------------------------------------------------------------------------------
+The session table is implemented using java.util.concurrent.ConcurrentHashMap with the key using sessionID and value using session object.
+The session object is contructed from Session.java class containing sessionID, versionNumber, message, expireTime and createTime. I 
+generate a unique ID using UUID class everytime a new session needs to be rendered through genSession() method in SessionServelet.java 
+class. After generate a new session, I add it into the session table. When each new request arrives, we check client cookie with 
+corresponding cookie name, then retrieve existing session from the session, otherwise render a new session. 
+
+
+Garbage collect timed-out session
+--------------------------------------------------------------------------------------------------------------------
+I create a daemon thread in servlet class when servlet starts. It checks each session object from the session table in every 5 minutes, 
+compare the expire time of each session object with current time. If it is before current time, it will be removed from the session 
+table.
+
+
+Functionality of each source file
+--------------------------------------------------------------------------------------------------------------------
+1, index.jsp: implemented using http form, it will issue a http post to http://localhost:8080/CS5300Project1/session if the replace 
+button or logout button is pressed. it contains a text field to receive user input as the new message if the replace button is pressed.
+It will issue a http get to http://localhost:8080/CS5300Project1/session if the refresh button is pressed. Also, this jsp file receives 
+information from java servlet class and display them, including NetID(static), current session ID, version number of current session, 
+time of last request, current cookie ID and session expire time.
+
+2, logout.jsp: display a successful log out information once the user click the logout button in index.jsp page.
+
+3, 
