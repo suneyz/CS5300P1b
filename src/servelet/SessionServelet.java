@@ -227,4 +227,8 @@ public class SessionServelet extends HttpServlet{
 		return sessionTable.get(sessionID);
 	}
 	
+	public static void addSessionToTable(Session session) {
+		sessionTable.put(session.getSessionID(), session);
+	}
+	
 }
