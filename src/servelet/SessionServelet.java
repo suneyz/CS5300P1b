@@ -23,7 +23,7 @@ public class SessionServelet extends HttpServlet{
 	 * doPost() method handles logout and replace message
 	 */
 	private static final long serialVersionUID = 1L;
-	private ConcurrentHashMap<String, Session> sessionTable;
+	private static ConcurrentHashMap<String, Session> sessionTable;
 	public static final String COOKIE_NAME = "cs5300project1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
@@ -222,4 +222,9 @@ public class SessionServelet extends HttpServlet{
 			}
 		}
 	}
+	
+	public static Session getSessionByID(String sessionID){
+		return sessionTable.get(sessionID);
+	}
+	
 }
