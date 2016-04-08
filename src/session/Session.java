@@ -19,8 +19,11 @@ public class Session implements Serializable{
 	public static final String DEFAULT_MESSAGE = "Hello User!";
 	public static final int EXPIRE_TIME = 5;
 	
+	private String serverID;
 	private String sessionID;
+	private long oldVersionNumber;
 	private long versionNumber;
+	private String oldMessage;
 	private String message;
 	private Date expireTime;
 	private Date createTime;
@@ -46,10 +49,15 @@ public class Session implements Serializable{
 	 * construct with sessionID information
 	 * @param SessionID
 	 */
-	public Session(String ID) {
+	public Session(String sessionID) {
 		// initialize from a sessionID
 		this();
-		sessionID = ID;
+		sessionID = sessionID;
+	}
+	
+	public Session(String sessionID, String serverID) {
+		this(sessionID);
+		serverID = sessionID;
 	}
 	
 	/*
@@ -57,6 +65,9 @@ public class Session implements Serializable{
 	 * Set new version number and expire time.
 	 */
 	public void refresh() {
+		
+		setOldVersionNumber(versionNumber);
+		
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, EXPIRE_TIME);
 		setExpireTime(cal.getTime());
@@ -130,6 +141,32 @@ public class Session implements Serializable{
 	 * Message setter
 	 */
 	public void setMessage(String message) {
+		setOldMessage(message);
 		this.message = message;
 	}
+
+	public String getServerID() {
+		return serverID;
+	}
+
+	public void setServerID(String serverID) {
+		this.serverID = serverID;
+	}
+
+	public long getOldVersionNumber() {
+		return oldVersionNumber;
+	}
+
+	public void setOldVersionNumber(long oldVersionNumber) {
+		this.oldVersionNumber = oldVersionNumber;
+	}
+
+	public String getOldMessage() {
+		return oldMessage;
+	}
+
+	public void setOldMessage(String oldMessage) {
+		this.oldMessage = oldMessage;
+	}
+	
 }
