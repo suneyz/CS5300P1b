@@ -3,6 +3,7 @@ package rpc;
 public class Utils {
 	public static final String OPERATION_SESSION_READ = "read";
 	public static final String OPERATION_SESSION_WRITE = "write";
+	public static final String OPERATION_SESSION_CREATE_NEW ="create";
 	public static final int PROJECT1_PORT_NUMBER = 5300;
 	public static final int MAX_PACKET_LENGTH = 512;
 	public static final String SPLITTER = "_";
@@ -12,4 +13,6 @@ public class Utils {
 	public static final int WQ = 3;
 	public static final int R = 2;
 	
+	public static final String[] responseFlagsForRead = new String[]{"SUCCESS", "TIME_OUT", "WRONG_FOUND_VERSION", "NOT_FOUND"};
+	public static final String[] responseFlagsForWriting = new String[] {"SUCCESS", "WRITING_FAILED","TIME_OUT"};
 }
