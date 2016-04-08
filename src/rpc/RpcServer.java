@@ -47,7 +47,6 @@ public class RpcServer {
 	 */
 	public byte[] sessionRead(String info){
 		String[] infoArray = info.split(Utils.SPLITTER);
-		// add version
 		String callID = infoArray[0];
 		String sessionID = infoArray[2];
 		String message;
