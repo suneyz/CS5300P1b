@@ -40,7 +40,8 @@ public class RpcClient {
 		
 		//TODO: figure out whether this is Parallel or Sequential
 		for(InetAddress destArr : destAdds){
-			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER);
+			System.out.println("Client Sending Request");
+			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER + 1);
 			rpcSocket.send(sendPkt);
 		}
 		byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];
@@ -150,7 +151,7 @@ public class RpcClient {
 	 * */
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
 		
-		DatagramSocket rpcSocket = new DatagramSocket();
+		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		String callID = genCallID();
 		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, sessionID, ""+versionNumber, message, date.toString() ));
 		
@@ -158,7 +159,8 @@ public class RpcClient {
 		byte[] outBuf = sentInfo.getBytes();
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
-			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER);
+			
+			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER+1);
 			rpcSocket.send(sendPkt);
 		}
 		

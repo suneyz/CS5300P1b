@@ -20,21 +20,23 @@ public class RpcServer {
 	 */
 	public void rpcCallRequestProcessor() throws IOException{
 		//TODO:ÕâÀïÊÇ·ñÐèÒª·ÂÕÕRPCClientRead ½¨Á¢¶à¸öSocket
-		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
+		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER+1);
 		//TODO: figure out what is the difference to be inside(original place) and outside
-		
+		System.out.println("server call processor running!");
         //InetAddress lastReceivedAddr = null;
 		while(true){
 			//TODO: worried about the memory since this keeps generating new 
 			byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];
 			byte[] outBuf = null;
 			DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
+			System.out.println("server waiting for incoming packet...");
 			rpcSocket.receive(recvPkt);
+			System.out.println("server received a packet!");
 			
 			//execute the following code when there arrives a packet
 			
 			if( recvPkt.getAddress()!=null ){
-				
+				System.out.println("A packet has arrived at server!");
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				String requestInfo = new String(recvPkt.getData());
@@ -43,6 +45,7 @@ public class RpcServer {
 						
 				switch(operationCode){
 					case Utils.OPERATION_SESSION_READ:
+						System.out.println("RPC server received read requset");
 						outBuf = sessionRead(requestInfo);
 						break;
 					case Utils.OPERATION_SESSION_WRITE:
@@ -50,7 +53,7 @@ public class RpcServer {
 						break;	
 				}
 				
-				DatagramPacket sentPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
+				DatagramPacket sentPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, Utils.PROJECT1_PORT_NUMBER);
 				rpcSocket.send(sentPkt);	
 			}
 			
@@ -74,7 +77,7 @@ public class RpcServer {
 		
 		// there will always be matched session,cookie hasn't time out, session won't time out
 		
-		Session session = TEST ? new Session("01/01/01") : SessionServelet.getSessionByID(sessionID);
+		Session session = TEST ? new Session("01_01_01") : SessionServelet.getSessionByID(sessionID);
 		readMessage = session.getMessageByVersionNumber(requestVersionNumber);
 		
 		//TODO: find out reading by versionNumber could go wrong or not!
@@ -133,7 +136,7 @@ public class RpcServer {
 		 String message = infoArray[4];	
 		 String expireTime = infoArray[5];
          
-		 Session newSession = TEST? new Session("02/02/02") : SessionServelet.getSessionByID(sessionID);
+		 Session newSession = TEST? new Session("02_02_02") : SessionServelet.getSessionByID(sessionID);
 		 
 		 if(newSession == null){
 			 newSession = new Session(sessionID, message);
