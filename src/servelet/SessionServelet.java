@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import rpc.Response;
+
 public class SessionServelet extends HttpServlet{
 
 	/**
@@ -27,6 +29,7 @@ public class SessionServelet extends HttpServlet{
 	public static final String COOKIE_NAME = "cs5300project1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
+	public static final String SESSIONID_SPLITTER = "_";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
 	public static final long THREAD_SLEEP_TIME = 1000 * 60 * 5;
 	public static final int COOKIE_AGE = 300;
@@ -62,13 +65,16 @@ public class SessionServelet extends HttpServlet{
 		if(sessionID == null) {
 			// no existing session, render a new session
 			
-//			session = genSession();
-//			sessionTable.put(session.getSessionID(), session);
+			session = genSession();
+			sessionTable.put(session.getSessionID(), session);
 			
 		} else {
 			// there is an existing session, refresh current session
 			session = sessionTable.get(sessionID);
 			session.refresh();
+			
+			//==========================
+			Response response = read(sessionID);
 		}
 		
 		// update coockie
@@ -242,8 +248,14 @@ public class SessionServelet extends HttpServlet{
 		sessionTable.put(session.getSessionID(), session);
 	}
 	
-	private Response read() {
+	private Response read(String sessionID) {
 		
 	}
+	
+	private Response write() {
+		
+	}
+	
+	public static retrive
 	
 }

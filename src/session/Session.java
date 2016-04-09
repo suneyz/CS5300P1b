@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 
+import servelet.SessionServelet;
+
 public class Session implements Serializable{
 	
 	/**
@@ -53,12 +55,13 @@ public class Session implements Serializable{
 	public Session(String sessionID) {
 		// initialize from a sessionID
 		this();
-		sessionID = sessionID;
+		this.sessionID = sessionID;
+		this.serverID = sessionID.split(SessionServelet.SESSIONID_SPLITTER)[0];
 	}
 	
-	public Session(String sessionID, String serverID) {
+	public Session(String sessionID, String message) {
 		this(sessionID);
-		serverID = sessionID;
+		this.message = message;
 	}
 	
 	/*
