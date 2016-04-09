@@ -124,17 +124,22 @@ public class RpcServer {
 		 String callID = infoArray[0];
 		 String sessionID = infoArray[2];
 		 String message = infoArray[3];
+
 		 
 		 //TODO: Make sure when we can't find a session: 1. due to the fact that it has been deleted
 		 //2. due to the fact that it is never created   
 		 // ===> we create a new one, with default message
 		 
-		 Session session = SessionServelet.getSessionByID(sessionID);
-		 if( session == null || new Date().after(session.getExpireTime()) ){
-			 //TODO: generate a new sessionID by a method to be implemented
-			 session = createNewSession(sessionID); 			 
-			 SessionServelet.addSessionToTable(session);
-		 }
+//		 Session session = SessionServelet.getSessionByID(sessionID);
+//		 if( session == null || new Date().after(session.getExpireTime()) ){
+//			 //TODO: generate a new sessionID by a method to be implemented
+//			 session = createNewSession(sessionID); 			 
+//			 SessionServelet.addSessionToTable(session);
+//		 }
+		 
+		 Session session = new Session(sessionID, message);
+		 
+		 SessionServelet.addSessionToTable(session);
 		
 		 String result = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, success));
 		 return result.getBytes();
