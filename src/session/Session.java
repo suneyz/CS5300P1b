@@ -22,7 +22,7 @@ public class Session implements Serializable{
 	public static final int EXPIRE_TIME = 5;
 	public static final int SESSION_TIMEOUT_SECS = 50;
 	
-	private String serverID;
+	private long serverID;
 	private String sessionID;
 	private long oldVersionNumber;
 	private long versionNumber;
@@ -56,7 +56,7 @@ public class Session implements Serializable{
 		// initialize from a sessionID
 		this();
 		this.sessionID = sessionID;
-		this.serverID = sessionID.split(SessionServelet.SESSIONID_SPLITTER)[0];
+		this.serverID = Long.parseLong(sessionID.split(SessionServelet.SESSIONID_SPLITTER)[0]);
 	}
 	
 	public Session(String sessionID, String message) {
@@ -152,11 +152,11 @@ public class Session implements Serializable{
 		this.message = message;
 	}
 
-	public String getServerID() {
+	public long getServerID() {
 		return serverID;
 	}
 
-	public void setServerID(String serverID) {
+	public void setServerID(long serverID) {
 		this.serverID = serverID;
 	}
 
