@@ -29,6 +29,12 @@ public class SessionServelet extends HttpServlet{
 	public static final String SPLITTER = "/";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
 	public static final long THREAD_SLEEP_TIME = 1000 * 60 * 5;
+	public static final int COOKIE_AGE = 300;
+	
+	private static long sessNum = 0;
+	
+	private static long servID = 0; // TODO: change it to read from local file
+	private static long rebootNum = 0; // TODO: change it to read from local file
 	
 	/*
 	 * Constructor
@@ -55,8 +61,10 @@ public class SessionServelet extends HttpServlet{
 		// check if there is an existing session
 		if(sessionID == null) {
 			// no existing session, render a new session
-			session = genSession();
-			sessionTable.put(session.getSessionID(), session);
+			
+//			session = genSession();
+//			sessionTable.put(session.getSessionID(), session);
+			
 		} else {
 			// there is an existing session, refresh current session
 			session = sessionTable.get(sessionID);
@@ -65,6 +73,7 @@ public class SessionServelet extends HttpServlet{
 		
 		// update coockie
 		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session));
+		currCookie.setMaxAge(COOKIE_AGE);
 		
 		// pass session to jsp file
 		request.setAttribute("session", session);
@@ -161,12 +170,14 @@ public class SessionServelet extends HttpServlet{
 	 * This method is used to render a new session
 	 * @return new session
 	 */
-	private Session genSession() {
+	public static Session genSession() {
 			String newSessionID = null;
-			do {
-				newSessionID = UUID.randomUUID().toString();
-				newSessionID.replace(SPLITTER, "-");
-			} while (sessionTable.containsKey(newSessionID));
+//			do {
+//				newSessionID = UUID.randomUUID().toString();
+//				newSessionID.replace(SPLITTER, "-");
+//			} while (sessionTable.containsKey(newSessionID));
+			newSessionID = servID + "_" + rebootNum + "_" + sessNum;
+			sessNum++;
 			return new Session(newSessionID);
 	}
 	
