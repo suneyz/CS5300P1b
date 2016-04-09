@@ -139,6 +139,9 @@ public class SessionServelet extends HttpServlet{
 //			session = sessionTable.get(sessionID);
 //		}
 		
+		Response readResponse = read(sessionID, versionNumber, new InetAddress[3]); //TODO: replace address
+		session = new Session(sessionID);
+		
 		// check the parameter from jsp button
 		if(param.equals("Replace")) {
 			
@@ -149,15 +152,17 @@ public class SessionServelet extends HttpServlet{
 //				currCookie.setValue(genCookieIDFromSession(session));
 //			}
 			
-			session = new Session(sessionID);
-			
-			Response readResponse = read(sessionID, versionNumber, new InetAddress[3]); //TODO: replace address
 			
 			// update message if input is valid
 			if(message != null || !message.equals("")) {
 				session.setMessage(message);
 			}
 			
+			Response writeResponse = write(sessionID, versionNumber, message, session.getExpireTime(), new InetAddress[3]); //TODO: replace address
+			
+			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
+				session.setVersionNumber(versionNumber + 1);
+			}
 			
 			// forward response and request to jsp 
 			request.setAttribute("session", session);
@@ -173,7 +178,10 @@ public class SessionServelet extends HttpServlet{
 				// remove session from the session table
 				sessionTable.remove(session.getSessionID());
 			}
-			currCookie.setMaxAge(0); 
+			
+			Response writeResponse = write(sessionID, versionNumber, message, Calendar.getInstance().getTime(), new InetAddress[3]); //TODO: replace address
+			
+			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) currCookie.setMaxAge(0); 
 			// redirect to logout page
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 			response.sendRedirect(LOG_OUT);
