@@ -171,7 +171,7 @@ public class RpcClient {
 		String resultData="";
 		ArrayList <String> locationDataList = new ArrayList<String>();
 		boolean continueListening = true;
-				
+	    //TODO: rpc.setSoTimeout();
 		try{
 			
 			InetAddress lastReceivedAddress = null;

@@ -13,6 +13,8 @@ import servelet.SessionServelet;
 import session.Session;
 
 public class RpcServer {
+	
+	public static final boolean TEST = true;
 	/*RPC Server Side method
 	 * 
 	 */
@@ -72,7 +74,7 @@ public class RpcServer {
 		
 		// there will always be matched session,cookie hasn't time out, session won't time out
 		
-		Session session = SessionServelet.getSessionByID(sessionID);
+		Session session = TEST ? new Session("01/01/01") : SessionServelet.getSessionByID(sessionID);
 		readMessage = session.getMessageByVersionNumber(requestVersionNumber);
 		
 		//TODO: find out reading by versionNumber could go wrong or not!
@@ -131,11 +133,11 @@ public class RpcServer {
 		 String message = infoArray[4];	
 		 String expireTime = infoArray[5];
          
-		 Session newSession = SessionServelet.getSessionByID(sessionID);
+		 Session newSession = TEST? new Session("02/02/02") : SessionServelet.getSessionByID(sessionID);
 		 
 		 if(newSession == null){
 			 newSession = new Session(sessionID, message);
-			 SessionServelet.addSessionToTable(newSession);
+			 if(!TEST) SessionServelet.addSessionToTable(newSession);
 		 }
 		 else{
 			 newSession.refresh();
