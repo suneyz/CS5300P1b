@@ -172,11 +172,11 @@ public class RpcClient {
 					String receivedReadResult = receivedInfoArray[1];
 					String receivedSessionID = receivedInfoArray[2];
 					
-					//A successful read: same callID, a SessionFound status flag and versionNumber+1;
+					//A successful write: same callID, unchanged SessionID, versionNumber+1 or versionNumber = 0;
 					//Difference is : we want ¡¾WQ¡¿ successful writes!
 					
 					// a countable packet
-					if( receivedCallID.equals(callID) && receivedSessionID.equals(sessionID)){
+					if( receivedCallID.equals(callID) ){
 						
 						numberOfReceivedPkt++;
 						// condition : when no more packet is coming, end the loop
@@ -186,7 +186,8 @@ public class RpcClient {
 						}
 						
 						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
-						if( receivedVersionNumber == 0 || versionNumber+1==Long.parseLong(receivedInfoArray[3])){
+						
+						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							

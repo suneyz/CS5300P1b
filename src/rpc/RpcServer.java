@@ -121,37 +121,18 @@ public class RpcServer {
 	 * */
 	 public byte[] sessionWrite(String info){
 		 String[] infoArray = info.split(Utils.SPLITTER);
-		 String callID = infoArray[0];
+		 String requestCallID = infoArray[0];
 		 String sessionID = infoArray[2];
-		 String message = infoArray[3];
-		 
-		 //TODO: Make sure when we can't find a session: 1. due to the fact that it has been deleted
-		 //2. due to the fact that it is never created   
-		 // ===> we create a new one, with default message
-		 
-		 Session session = SessionServelet.getSessionByID(sessionID);
-		 if( session == null || new Date().after(session.getExpireTime()) ){
-			 //TODO: generate a new sessionID by a method to be implemented
-			 session = createNewSession(sessionID); 			 
-			 SessionServelet.addSessionToTable(session);
-		 }
-		
-		 String result = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, success));
+		 Long requestVersionNumber = Long.parseLong(infoArray[3]);
+		 String message = infoArray[4];		 
+
+         // this will update the session table what ever		 
+		 Session newSession = new Session(sessionID, message);
+		 newSession.setVersionNumber(requestVersionNumber);
+		 SessionServelet.addSessionToTable(newSession);
+
+		 //String result = String.join(Utils.SPLITTER, Arrays.asList(callID));
+		 String result = requestCallID;
 		 return result.getBytes();
-	 }
-	 
-	 /*createNewSession
-	  * create a new session with the given sessionID message
-	  * */
-	 public Session createNewSession(String sessionID){
-		 
-		 Session newSession = new Session(sessionID);
-		 newSession.setVersionNumber(0);
-		 newSession.setMessage(Session.DEFAULT_MESSAGE);
-		 Date createdTime = new Date();
-		 newSession.setCreateTime(createdTime);
-         Date expireTime = new Date(createdTime.getTime()+ Session.SESSION_TIMEOUT_SECS);
-         newSession.setExpireTime(expireTime);
-         return newSession;
 	 }
 }
