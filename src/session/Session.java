@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 
-import servelet.SessionServelet;
-
 public class Session implements Serializable{
 	
 	/**
@@ -55,19 +53,13 @@ public class Session implements Serializable{
 	public Session(String sessionID) {
 		// initialize from a sessionID
 		this();
-		this.sessionID = sessionID;
-		this.serverID = sessionID.split(SessionServelet.SESSIONID_SPLITTER)[0];
+		sessionID = sessionID;
 	}
 	
-	public Session(String sessionID, String message) {
+	public Session(String sessionID, String serverID) {
 		this(sessionID);
-		setMessage(message);
+		serverID = sessionID;
 	}
-	
-//	public Session(String sessionID, String serverID) {
-//		this(sessionID);
-//		serverID = sessionID;
-//	}
 	
 	/*
 	 * This method is used to refresh current session
