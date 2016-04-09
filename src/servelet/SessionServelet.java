@@ -242,4 +242,8 @@ public class SessionServelet extends HttpServlet{
 		sessionTable.put(session.getSessionID(), session);
 	}
 	
+	private Response read() {
+		
+	}
+	
 }

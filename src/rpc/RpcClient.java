@@ -17,7 +17,7 @@ public class RpcClient {
 	/*method:generate a new unique callIDs
 	 * 
 	 */
-	public String genCallID(){
+	public static String genCallID(){
 		String resultID = UUID.randomUUID().toString();
 		resultID.replace(Utils.SPLITTER, "\\");
 		return resultID;
@@ -26,7 +26,7 @@ public class RpcClient {
 	/*method:SessionReadClient
 	 * 
 	 */
-	public Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
+	public static Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
 		String resultMessage="";
@@ -127,7 +127,7 @@ public class RpcClient {
 	/*method:SessionWriteClient
 	 * 
 	 * */
-	public Response sessionWriteClient(String sessionID, Long versionNumber, String message, InetAddress[] destAddrs) throws IOException{
+	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, InetAddress[] destAddrs) throws IOException{
 		
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
