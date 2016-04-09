@@ -148,6 +148,7 @@ public class RpcClient {
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		String resultFlag="";
 		String resultData="";
+		ArrayList <String> locationDataList = new ArrayList<String>();
 		boolean continueListening = true;
 				
 		try{
@@ -169,7 +170,7 @@ public class RpcClient {
 					String receivedInfo = new String(receivedByteArray);
 					String[] receivedInfoArray = receivedInfo.split(Utils.SPLITTER); 
 					String receivedCallID = receivedInfoArray[0];
-					String receivedReadResult = receivedInfoArray[1];
+					String receivedServID = receivedInfoArray[1];
 					String receivedSessionID = receivedInfoArray[2];
 					
 					//A successful write: same callID, unchanged SessionID, versionNumber+1 or versionNumber = 0;
@@ -190,7 +191,7 @@ public class RpcClient {
 						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
-							
+							locationDataList.add(receivedServID);
 							//condition to successfully quit looping
 							if(responseNumberForSuccessfulWriting == Utils.WQ){
 								continueListening = false;
@@ -209,10 +210,11 @@ public class RpcClient {
 			resultFlag = "TIME_OUT";
 					
 		} 
-		
+		//TODO: store WQ metadata
 		Response res = new Response();
 		res.resStatus = resultFlag;
-		res.resData = resultData;
+		res.resMessage = resultData;
+		res.locationData = String.join(Utils.SPLITTER, elements)
 		
 		return res;
 	}

@@ -126,15 +126,24 @@ public class RpcServer {
 		 String requestCallID = infoArray[0];
 		 String sessionID = infoArray[2];
 		 Long requestVersionNumber = Long.parseLong(infoArray[3]);
-		 String message = infoArray[4];		 
-
-         // this will update the session table what ever		 
-		 Session newSession = new Session(sessionID, message);
-		 newSession.setVersionNumber(requestVersionNumber);
-		 SessionServelet.addSessionToTable(newSession);
+		 String message = infoArray[4];	
+		 String expireTime = infoArray[5];
+         
+		 Session newSession = SessionServelet.getSessionByID(sessionID);
+		 
+		 if(newSession == null){
+			 newSession = new Session(sessionID, message);
+			 SessionServelet.addSessionToTable(newSession);
+		 }
+		 else{
+			 newSession.refresh();
+			 newSession.setMessage(message);
+		 }
+		
 
 		 //String result = String.join(Utils.SPLITTER, Arrays.asList(callID));
-		 String result = requestCallID;
+		 String result = String.join(Utils.SPLITTER, Arrays.asList(requestCallID, ""+SessionServelet.getServID(),
+				 newSession.getSessionID(), newSession.getVersionNumber()));
 		 return result.getBytes();
 	 }
 }

@@ -70,8 +70,6 @@ public class Session implements Serializable{
 	 */
 	public void refresh() {
 		
-		setOldVersionNumber(versionNumber);
-		
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, EXPIRE_TIME);
 		setExpireTime(cal.getTime());
