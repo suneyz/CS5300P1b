@@ -74,15 +74,20 @@ public class SessionServelet extends HttpServlet{
 			
 		} else {
 			// there is an existing session, refresh current session
-			session = sessionTable.get(sessionID);
-			session.refresh();
+//			session = sessionTable.get(sessionID);
+//			session.refresh();
 			
 			//==========================
 //			currCookie.getValue();
 			
-			Response r = read(sessionID, getVersionNumberFromCookie(currCookie), new InetAddress[3]);
-			if(r.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
-				
+			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), new InetAddress[3]); // TODO: replace INETADDRESS
+			
+			session = genSession();
+			session.setSessionID(sessionID);
+			session.setServerID(servID);
+			
+			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
+				Response writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), readResponse.resData, new InetAddress[3]);
 			}
 			
 		}
@@ -95,7 +100,6 @@ public class SessionServelet extends HttpServlet{
 		request.setAttribute("session", session);
 		request.setAttribute("currTime", Calendar.getInstance().getTime());
 		request.setAttribute("cookieID", currCookie.getValue());
-		response.addCookie(currCookie);
 		response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 		RequestDispatcher dispacher = request.getRequestDispatcher("/");
 		dispacher.forward(request, response);
@@ -266,10 +270,17 @@ public class SessionServelet extends HttpServlet{
 		return RpcClient.sessionReadClient(sessionID, versionNumber, destAdds);
 	}
 	
-	private Response write(String sessionID, long versionNumber, String message, InetAddress[] destAdds) {
-		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, destAddrs)
+	private Response write(String sessionID, long versionNumber, String message, InetAddress[] destAddrs) throws IOException {
+		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, destAddrs);
 	}
 	
+	
+	
+	// =======
+	
+	public static long getServID(){
+		return servID;
+	}
 	
 	
 }
