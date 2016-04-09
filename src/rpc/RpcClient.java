@@ -8,9 +8,11 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.UUID;
 
 import rpc.Utils.*;
+import session.Session;
 
 public class RpcClient {
 
@@ -30,7 +32,7 @@ public class RpcClient {
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
 		String resultMessage="";
-		String resultData="";
+		String resultStatus="";
 		
 		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_READ, sessionID, ""+versionNumber ));
 		byte[] outBuf = sentInfo.getBytes();
@@ -71,8 +73,9 @@ public class RpcClient {
 					String receivedInfo = new String(receivedByteArray);
 					String[] receivedInfoArray = receivedInfo.split(Utils.SPLITTER); 
 					String receivedCallID = receivedInfoArray[0];
-					String receivedReadResult = receivedInfoArray[1];
-					String receivedSessionID = receivedInfoArray[2];
+					//String receivedReadResult = receivedInfoArray[1];
+					//String receivedSessionID = receivedInfoArray[2];
+					String receivedSessionID = receivedInfoArray[1];
 					
 					//A successful read: same callID, a SessionFound status flag and versionNumber+1;
 					
@@ -80,7 +83,7 @@ public class RpcClient {
 						
 						numberOfReceivedPkt++;
 						
-						if(receivedReadResult.equals("1")){
+						/*if(receivedReadResult.equals("1")){
 							
 							Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
 							if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
@@ -94,6 +97,19 @@ public class RpcClient {
 								resultMessage = "WRONG_FOUND_VERSION";
 								
 							}
+						}*/
+						
+						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[2]);
+						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
+							resultStatus = "SUCCESS";
+							resultMessage = receivedInfoArray[3];
+							
+							// if a success response has been received, stop the looping which means stop listening
+							continueListening = false;
+						}
+						else{
+							resultStatus = "WRONG_FOUND_VERSION";
+							
 						}
 						
 						//no action for wrong response
@@ -102,7 +118,7 @@ public class RpcClient {
 				}
 				//this is when all WQ repsonses are received but no expcted data, kill the loop and return not found
 				if(continueListening && numberOfReceivedPkt == Utils.WQ) {
-					if(resultMessage.equals("")) resultMessage = "NOT_FOUND";
+					if(resultMessage.equals("")) resultStatus = "NOT_FOUND";
 					continueListening = false;
 				}
 				
@@ -112,26 +128,31 @@ public class RpcClient {
 			//TODO: how to set the timeout time???How long???
 			// timeout
 			recvPkt = null;
-			resultMessage = "TIME_OUT";
+			resultStatus = "TIME_OUT";
 		}
 		
 		//generate response and return
 		
 		Response res = new Response();
-		res.resStatus = resultMessage;
-		//res.resPkt = recvPkt;
-		res.resData = resultData;
+		res.resStatus = resultStatus;
+		res.resMessage = resultMessage;
 		return res;
 	}
+	
+	
+	public static Response sessionWriteClient(String sessionID, Long versionNumber, Date date, InetAddress[] destAddrs) throws IOException{
+		return sessionWriteClient(sessionID, versionNumber, Session.DEFAULT_MESSAGE, date, destAddrs);
+	}
+	
 	
 	/*method:SessionWriteClient
 	 * 
 	 * */
-	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, InetAddress[] destAddrs) throws IOException{
+	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
 		
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
-		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, sessionID, ""+versionNumber, message ));
+		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, sessionID, ""+versionNumber, message, date.toString() ));
 		
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
@@ -214,7 +235,7 @@ public class RpcClient {
 		Response res = new Response();
 		res.resStatus = resultFlag;
 		res.resMessage = resultData;
-		res.locationData = String.join(Utils.SPLITTER, elements)
+		res.locationData = String.join(Utils.SPLITTER, locationDataList);
 		
 		return res;
 	}

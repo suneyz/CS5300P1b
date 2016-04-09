@@ -70,50 +70,52 @@ public class RpcServer {
 		String readResult;
 		String responseInfo;
 		
+		// there will always be matched session,cookie hasn't time out, session won't time out
+		
 		Session session = SessionServelet.getSessionByID(sessionID);
 		readMessage = session.getMessageByVersionNumber(requestVersionNumber);
 		
+		//TODO: find out reading by versionNumber could go wrong or not!
+		
 		byte[] outBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		
-		// no matched session
-		// probably due to pass the discard_time, even when we are reading/refreshing, we should
-		// create a new session, like we did in project1a
 		
-		if(session == null) {
-			
-			//TODO:we need a new method to generate a new sessionID with an old one
-			String newSessionID = "";
-			
-			session = createNewSession(newSessionID);
-			readResult = "1";
-			responseInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, readResult, sessionID, ""+versionNumber, readMessage));
-		}
+		
+//		if(session == null) {
+//			
+//			//TODO:we need a new method to generate a new sessionID with an old one
+//			String newSessionID = "";
+//			
+//			session = createNewSession(newSessionID);
+//			readResult = "1";
+//			responseInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, readResult, sessionID, ""+versionNumber, readMessage));
+//		}
 		
 		// has matched session
-		else{
-			//readResult = "1";
-			//get the message with the specified version
-			
-			//TODO : implement a new bi-version structure inside a session, 
-			//different version may relate to diff val
-			Long curVersionNumber=session.getVersionNumber();
-			//TODO: when reading, should we set the curVersion to be the request version+1? or oldversion +1?
-			curVersionNumber++;
-			session.setVersionNumber(requestVersionNumber+1);
-			readMessage=session.getMessage();
-			
-			//if we get the message of right versionNumber, 
-			readResult = "1";
-			
-			//else , we could set the readMessage to the description of what goes wrong
-			readResult = "0";
-			readMessage = "VERSION_NOT_FOUND";
-			
-			
-			responseInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, readResult, sessionID, ""+versionNumber, readMessage));
-		}
+//		else{
+//			//readResult = "1";
+//			//get the message with the specified version
+//			
+//			//TODO : implement a new bi-version structure inside a session, 
+//			//different version may relate to diff val
+//			Long curVersionNumber=session.getVersionNumber();
+//			//TODO: when reading, should we set the curVersion to be the request version+1? or oldversion +1?
+//			curVersionNumber++;
+//			session.setVersionNumber(requestVersionNumber+1);
+//			readMessage=session.getMessage();
+//			
+//			//if we get the message of right versionNumber, 
+//			readResult = "1";
+//			
+//			//else , we could set the readMessage to the description of what goes wrong
+//			readResult = "0";
+//			readMessage = "VERSION_NOT_FOUND";
+//			
+//			
+//			responseInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, readResult, sessionID, ""+versionNumber, readMessage));
+//		}
 		
-		outBuf = responseInfo.getBytes();
+		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, ""+requestVersionNumber, readMessage) ).getBytes();
 		
 		return outBuf;
 	}
@@ -142,8 +144,8 @@ public class RpcServer {
 		
 
 		 //String result = String.join(Utils.SPLITTER, Arrays.asList(callID));
-		 String result = String.join(Utils.SPLITTER, Arrays.asList(requestCallID, ""+SessionServelet.getServID(),
-				 newSession.getSessionID(), newSession.getVersionNumber()));
+		 String result = String.join(Utils.SPLITTER, Arrays.asList(requestCallID, SessionServelet.getServID()+"",
+				 newSession.getSessionID(), ""+newSession.getVersionNumber() ));
 		 return result.getBytes();
 	 }
 }
