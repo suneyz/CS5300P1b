@@ -1,6 +1,7 @@
 package servelet;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import rpc.Response;
+import rpc.RpcClient;
+import rpc.RpcServer;
+import rpc.Utils;
 
 public class SessionServelet extends HttpServlet{
 
@@ -74,7 +78,13 @@ public class SessionServelet extends HttpServlet{
 			session.refresh();
 			
 			//==========================
-			Response response = read(sessionID);
+//			currCookie.getValue();
+			
+			Response r = read(sessionID, getVersionNumberFromCookie(currCookie), new InetAddress[3]);
+			if(r.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
+				
+			}
+			
 		}
 		
 		// update coockie
@@ -196,6 +206,10 @@ public class SessionServelet extends HttpServlet{
 		return cookie == null ? null : cookie.getValue().split(SPLITTER)[0];
 	}
 	
+	private Long getVersionNumberFromCookie(Cookie cookie) {
+		return cookie == null ? null : Long.parseLong(cookie.getValue().split(SPLITTER)[1]);
+	}
+	
 	/*
 	 * Get cookie ID information from input session
 	 * @param Session session
@@ -248,13 +262,12 @@ public class SessionServelet extends HttpServlet{
 		sessionTable.put(session.getSessionID(), session);
 	}
 	
-	private Response read(String sessionID) {
-		String[] infoArray = sessionID.split(SESSIONID_SPLITTER);
-		
+	private Response read(String sessionID, long versionNumber, InetAddress[] destAdds) throws IOException {
+		return RpcClient.sessionReadClient(sessionID, versionNumber, destAdds);
 	}
 	
-	private Response write() {
-		
+	private Response write(String sessionID, long versionNumber, String message, InetAddress[] destAdds) {
+		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, destAddrs)
 	}
 	
 	
