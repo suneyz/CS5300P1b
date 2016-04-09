@@ -181,7 +181,9 @@ public class SessionServelet extends HttpServlet{
 			
 			Response writeResponse = write(sessionID, versionNumber, message, Calendar.getInstance().getTime(), new InetAddress[3]); //TODO: replace address
 			
-			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) currCookie.setMaxAge(0); 
+			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) 
+				currCookie.setMaxAge(0); 
+			
 			// redirect to logout page
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 			response.sendRedirect(LOG_OUT);
@@ -189,6 +191,10 @@ public class SessionServelet extends HttpServlet{
 			throw new IOException(INVALID_INSTRUCTION);
 		}
 		
+	}
+	
+	public static String genTableKey(String sessionID, String versionNum){
+		return sessionID + SPLITTER + versionNum;
 	}
 	
 	/*
@@ -282,12 +288,12 @@ public class SessionServelet extends HttpServlet{
 		}
 	}
 	
-	public static Session getSessionByID(String sessionID){
-		return sessionTable.get(sessionID);
+	public static Session getSessionByIDVersion(String sessionID, String versionNumber){
+		return sessionTable.get(genTableKey(sessionID, versionNumber));
 	}
 	
 	public static void addSessionToTable(Session session) {
-		sessionTable.put(session.getSessionID(), session);
+		sessionTable.put(genTableKey(session.getSessionID(), String.valueOf(session.getVersionNumber())), session);
 	}
 	
 	private Response read(String sessionID, long versionNumber, InetAddress[] destAdds) throws IOException {
