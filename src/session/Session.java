@@ -44,7 +44,7 @@ public class Session implements Serializable{
 		cal.add(Calendar.MINUTE, EXPIRE_TIME); // set the expire time stamp to be 5 minutes later
 		setExpireTime(cal.getTime());
 		setMessage(DEFAULT_MESSAGE);
-		setVersionNumber(1);
+		setVersionNumber(0);
 	}
 	
 	/*
@@ -103,6 +103,11 @@ public class Session implements Serializable{
 	 * VersionNumber setter
 	 */
 	public void setVersionNumber(long versionNumber) {
+		if(versionNumber != 0) {
+			setOldVersionNumber(this.versionNumber);
+			this.oldMessage = message;
+		}
+
 		this.versionNumber = versionNumber;
 	}
 	
@@ -161,7 +166,7 @@ public class Session implements Serializable{
 		return oldVersionNumber;
 	}
 
-	public void setOldVersionNumber(long oldVersionNumber) {
+	private void setOldVersionNumber(long oldVersionNumber) {
 		this.oldVersionNumber = oldVersionNumber;
 	}
 
@@ -171,6 +176,12 @@ public class Session implements Serializable{
 
 	public void setOldMessage(String oldMessage) {
 		this.oldMessage = oldMessage;
+	}
+	
+	public String getMessageByVersionNumber(long versionNumber) {
+		if(versionNumber == this.oldVersionNumber) return oldMessage;
+		if(versionNumber == this.versionNumber) return message;
+		return null;
 	}
 	
 }

@@ -249,6 +249,7 @@ public class SessionServelet extends HttpServlet{
 	}
 	
 	private Response read(String sessionID) {
+		String[] infoArray = sessionID.split(SESSIONID_SPLITTER);
 		
 	}
 	
@@ -256,6 +257,6 @@ public class SessionServelet extends HttpServlet{
 		
 	}
 	
-	public static retrive
+	
 	
 }
