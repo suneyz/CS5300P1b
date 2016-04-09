@@ -82,7 +82,8 @@ public class RpcClient {
 						
 						if(receivedReadResult.equals("1")){
 							
-							if(versionNumber+1==Long.parseLong(receivedInfoArray[3])){
+							Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
+							if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
 								resultMessage = "SUCCESS";
 								resultData = receivedInfoArray[4];
 								
@@ -172,7 +173,7 @@ public class RpcClient {
 					String receivedSessionID = receivedInfoArray[2];
 					
 					//A successful read: same callID, a SessionFound status flag and versionNumber+1;
-					//Difference is : we want ¡¾WQ¡¿ successful writes!
+					//Difference is : we want Â¡Â¾WQÂ¡Â¿ successful writes!
 					
 					// a countable packet
 					if( receivedCallID.equals(callID) && receivedSessionID.equals(sessionID)){
@@ -184,7 +185,8 @@ public class RpcClient {
 							resultFlag = "WRITING_FAILED";
 						}
 						
-						if(receivedReadResult.equals("1") && versionNumber+1==Long.parseLong(receivedInfoArray[3])){
+						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
+						if( receivedVersionNumber == 0 || versionNumber+1==Long.parseLong(receivedInfoArray[3])){
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							
