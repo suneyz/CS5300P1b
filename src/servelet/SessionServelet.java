@@ -3,6 +3,7 @@ package servelet;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import session.Session;
@@ -64,13 +65,16 @@ public class SessionServelet extends HttpServlet{
 		Session session;
 		Cookie currCookie = findCookie(request.getCookies());
 		String sessionID = getSessionIDFromCookie(currCookie);
+		Response writeResponse = null;
 		
 		// check if there is an existing session
 		if(sessionID == null) {
 			// no existing session, render a new session
 			
 			session = genSession();
-			sessionTable.put(session.getSessionID(), session);
+//			sessionTable.put(session.getSessionID(), session);
+			
+			writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), Session.DEFAULT_MESSAGE, session.getExpireTime(), new InetAddress[3]);
 			
 		} else {
 			// there is an existing session, refresh current session
@@ -87,13 +91,15 @@ public class SessionServelet extends HttpServlet{
 			session.setServerID(servID);
 			
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
-				Response writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), readResponse.resData, new InetAddress[3]);
+				writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), readResponse.resMessage, session.getExpireTime(), new InetAddress[3]); // TODO: replace INETADDRESS
+				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
+					//TODO: handle the case when write operation fails
+				}
 			}
-			
 		}
 		
 		// update coockie
-		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session));
+		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
 		currCookie.setMaxAge(COOKIE_AGE);
 		
 		// pass session to jsp file
@@ -118,28 +124,34 @@ public class SessionServelet extends HttpServlet{
 		String message = request.getParameter("message");
 		Cookie currCookie = findCookie(request.getCookies());
 		String sessionID = getSessionIDFromCookie(currCookie);
+		long versionNumber = getVersionNumberFromCookie(currCookie);
+		String locationData = getLocationDataFromCookie(currCookie);
 		Session session;
-		boolean isNewSession = false;
+//		boolean isNewSession = false;
 		
 		// render a new session if the old session is already expired
-		if(sessionID == null || !sessionTable.containsKey(sessionID)) {
-			session = genSession();
-			sessionTable.put(session.getSessionID(), session);
-			isNewSession = true;
-			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session));
-		} else {
-			session = sessionTable.get(sessionID);
-		}
+//		if(sessionID == null || !sessionTable.containsKey(sessionID)) {
+//			session = genSession();
+//			sessionTable.put(session.getSessionID(), session);
+//			isNewSession = true;
+//			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session));
+//		} else {
+//			session = sessionTable.get(sessionID);
+//		}
 		
 		// check the parameter from jsp button
 		if(param.equals("Replace")) {
 			
-			if(!isNewSession) {
-				// handle message replace button
-				session.refresh();
-				// generate cookie
-				currCookie.setValue(genCookieIDFromSession(session));
-			}
+//			if(!isNewSession) {
+//				// handle message replace button
+//				session.refresh();
+//				// generate cookie
+//				currCookie.setValue(genCookieIDFromSession(session));
+//			}
+			
+			session = new Session(sessionID);
+			
+			Response readResponse = read(sessionID, versionNumber, new InetAddress[3]); //TODO: replace address
 			
 			// update message if input is valid
 			if(message != null || !message.equals("")) {
@@ -214,13 +226,17 @@ public class SessionServelet extends HttpServlet{
 		return cookie == null ? null : Long.parseLong(cookie.getValue().split(SPLITTER)[1]);
 	}
 	
+	private String getLocationDataFromCookie(Cookie cookie) {
+		return cookie == null ? null : cookie.getValue().split(SPLITTER)[2];
+	}
+	
 	/*
 	 * Get cookie ID information from input session
 	 * @param Session session
 	 * @return String output cookie ID
 	 */
-	private String genCookieIDFromSession(Session session) {
-		return session.getSessionID() + SPLITTER + session.getVersionNumber();
+	private String genCookieIDFromSession(Session session, String locationData) {
+		return session.getSessionID() + SPLITTER + session.getVersionNumber() + SPLITTER + locationData;
 	}
 
 	/*
@@ -270,8 +286,8 @@ public class SessionServelet extends HttpServlet{
 		return RpcClient.sessionReadClient(sessionID, versionNumber, destAdds);
 	}
 	
-	private Response write(String sessionID, long versionNumber, String message, InetAddress[] destAddrs) throws IOException {
-		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, destAddrs);
+	private Response write(String sessionID, long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException {
+		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, date, destAddrs);
 	}
 	
 	
