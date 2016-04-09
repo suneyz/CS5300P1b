@@ -71,6 +71,8 @@ public class RpcServer {
 		String responseInfo;
 		
 		Session session = SessionServelet.getSessionByID(sessionID);
+		readMessage = session.getMessageByVersionNumber(requestVersionNumber);
+		
 		byte[] outBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		
 		// no matched session
