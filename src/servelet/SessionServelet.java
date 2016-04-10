@@ -42,7 +42,7 @@ public class SessionServelet extends HttpServlet{
 	
 	private static long sessNum = 0;
 	
-	private static long servID = 0; // TODO: change it to read from local file
+	private static long servID = 1; // TODO: change it to read from local file
 	private static long rebootNum = 0; // TODO: change it to read from local file
 	
 	//-------------
@@ -98,7 +98,7 @@ public class SessionServelet extends HttpServlet{
 			session = genSession();
 //			sessionTable.put(session.getSessionID(), session);
 			
-			writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), Session.DEFAULT_MESSAGE, session.getExpireTime(), addrs);
+			writeResponse = write(sessionID, 0, Session.DEFAULT_MESSAGE, session.getExpireTime(), addrs);
 			
 		} else {
 			
