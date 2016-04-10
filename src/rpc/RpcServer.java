@@ -26,7 +26,7 @@ public class RpcServer {
 		//TODO:ÕâÀïÊÇ·ñÐèÒª·ÂÕÕRPCClientRead ½¨Á¢¶à¸öSocket
 		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		//TODO: figure out what is the difference to be inside(original place) and outside
-		System.out.println("server call processor running!");
+		System.out.println("server thread initialized!");
         //InetAddress lastReceivedAddr = null;
 		while(true){
 			//TODO: worried about the memory since this keeps generating new 

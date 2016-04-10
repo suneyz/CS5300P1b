@@ -31,7 +31,7 @@ public class RpcClient {
 	 * 
 	 */
 	public static Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
-		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
+		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
 		String resultMessage="";
 		String resultStatus="";
@@ -165,7 +165,7 @@ public class RpcClient {
 	 * */
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
 		if(TEST1)System.out.println("SessionWrite called");
-		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
+		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
 		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
 		String expireTimeStr = sdf.format(date);
