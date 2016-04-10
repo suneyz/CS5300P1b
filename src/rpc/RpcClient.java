@@ -44,7 +44,7 @@ public class RpcClient {
 		//TODO: figure out whether this is Parallel or Sequential
 		for(InetAddress destArr : destAdds){
 			System.out.println("--Client Sending Request");
-			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER + 1);
+			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER);
 			rpcSocket.send(sendPkt);
 		}
 		byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];

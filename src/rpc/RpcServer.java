@@ -24,7 +24,7 @@ public class RpcServer {
 	 */
 	public void rpcCallRequestProcessor() throws IOException, ParseException, NumberFormatException{
 		//TODO:ÕâÀïÊÇ·ñÐèÒª·ÂÕÕRPCClientRead ½¨Á¢¶à¸öSocket
-		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER+1);
+		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		//TODO: figure out what is the difference to be inside(original place) and outside
 		System.out.println("server call processor running!");
         //InetAddress lastReceivedAddr = null;
