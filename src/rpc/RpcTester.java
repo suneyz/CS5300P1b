@@ -1,6 +1,6 @@
 package rpc;
 
-import static org.junit.Assert.*;
+
 
 import java.io.IOException;
 import java.net.InetAddress;

@@ -42,7 +42,7 @@ public class SessionServelet extends HttpServlet{
 	
 	private static long sessNum = 0;
 	
-	private static long servID = 1; // TODO: change it to read from local file
+	private static long servID = 0; // TODO: change it to read from local file
 	private static long rebootNum = 0; // TODO: change it to read from local file
 	
 	//-------------
@@ -236,6 +236,7 @@ public class SessionServelet extends HttpServlet{
 	 * @return Cookie
 	 */
 	private Cookie findCookie(Cookie[] cookies){
+		if (cookies == null) return null;
 		for(Cookie cookie : cookies) {
 			String sessionID = getSessionIDFromCookie(cookie);
 			if(cookie.getName().equals(COOKIE_NAME) && sessionTable.containsKey(sessionID)) {
