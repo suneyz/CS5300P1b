@@ -32,13 +32,13 @@ public class SessionServelet extends HttpServlet{
 	 */
 	private static final long serialVersionUID = 1L;
 	private static ConcurrentHashMap<String, Session> sessionTable;
-	public static final String COOKIE_NAME = "cs5300project1";
+	public static final String COOKIE_NAME = "CS5300PROJECT1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
-	public static final long THREAD_SLEEP_TIME = 1000 * 60 * 5;
-	public static final int COOKIE_AGE = 300;
+	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
+	public static final int COOKIE_AGE = 10;
 	
 	private static long sessNum = 0;
 	
