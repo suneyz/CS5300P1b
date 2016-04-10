@@ -40,7 +40,7 @@ public class SessionServelet extends HttpServlet{
 	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
 	public static final int COOKIE_AGE = 10;
 	
-	private static long sessNum = 0;
+	private static long sessNum = 0; // sessin number
 	
 	private static long servID = 0; // TODO: change it to read from local file
 	private static long rebootNum = 0; // TODO: change it to read from local file
