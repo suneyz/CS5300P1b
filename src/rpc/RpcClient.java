@@ -171,7 +171,7 @@ public class RpcClient {
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
 			
-			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER+1);
+			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER);
 			rpcSocket.send(sendPkt);
 		}
 		
