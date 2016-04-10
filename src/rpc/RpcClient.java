@@ -167,11 +167,13 @@ public class RpcClient {
 		if(TEST1)System.out.println("SessionWrite called");
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = genCallID();
+		
 		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
 		String expireTimeStr = sdf.format(date);
+		
 		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, 
 				sessionID, ""+versionNumber, message, expireTimeStr ));
-		
+		System.out.println("client sent info content: "+sentInfo);
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
