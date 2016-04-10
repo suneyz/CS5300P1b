@@ -111,7 +111,7 @@ public class SessionServelet extends HttpServlet{
 			if(TEST) {
 				System.out.println("First Time ping the web, rendering a new session......");
 			}
-			writeResponse = write(sessionID, 0, Session.DEFAULT_MESSAGE, session.getExpireTime(), addrs);
+			writeResponse = write(session.getSessionID(), 0, session.getMessage(), session.getExpireTime(), addrs);
 			
 			if(TEST) {
 				System.out.println("Finish render new session.");
@@ -138,7 +138,7 @@ public class SessionServelet extends HttpServlet{
 			
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
 				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
-				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage, session.getExpireTime(), addrs); // TODO: replace INETADDRESS
+				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage.trim(), session.getExpireTime(), addrs); // TODO: replace INETADDRESS
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 					//TODO: handle the case when write operation fails
 				}

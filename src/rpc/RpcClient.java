@@ -32,7 +32,7 @@ public class RpcClient {
 	 */
 	public static Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
 		DatagramSocket rpcSocket = new DatagramSocket();
-		String callID = genCallID();
+		String callID = sessionID; //genCallID();  //TODO: if it is ok to use sessionID
 		String resultMessage="";
 		String resultStatus="";
 		
@@ -166,16 +166,23 @@ public class RpcClient {
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
 		if(TEST1)System.out.println("SessionWrite called");
 		DatagramSocket rpcSocket = new DatagramSocket();
-		String callID = genCallID();
+		String callID = sessionID; //genCallID(); //TODO: if it is ok to use sessionID 
 		
 		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
 		String expireTimeStr = sdf.format(date);
 		
-		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, 
+		String sentInfo = new String();
+		sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, 
 				sessionID, ""+versionNumber, message, expireTimeStr ));
 		System.out.println("client sent info content: "+sentInfo);
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
+		System.out.println("SessionID size is: " + sessionID.length());
+		System.out.println("VersionNumber size is: " + versionNumber);
+		System.out.println("Message size is: " + message.length());
+		System.out.println("String size is: " + sentInfo.length());
+		System.out.println("confirm the byte data: " + new String(outBuf));
+		System.out.println("byte size is: " + outBuf.length);
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
 			System.out.println("Client sending packet to server with IP: " + destAddr.getHostAddress());
