@@ -158,7 +158,7 @@ public class RpcClient {
 	 * 
 	 * */
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
-		
+		if(TEST1)System.out.println("SessionWrite called");
 		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		String callID = genCallID();
 		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
@@ -193,8 +193,9 @@ public class RpcClient {
 			
 			do{
 				recvPkt.setLength(inBuf.length);
+				System.out.println("Client Waiting for coming packet");
 				rpcSocket.receive(recvPkt);	
-				
+				System.out.println("Client-packet coming!!!");
 				//execute when packets are actually coming
 				if(recvPkt.getAddress()!=null &&(lastReceivedAddress == null || !lastReceivedAddress.equals(recvPkt.getAddress()) )){
 					
@@ -227,7 +228,7 @@ public class RpcClient {
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
 							//condition to successfully quit looping
-							if(responseNumberForSuccessfulWriting == (TEST1 ? 2 : Utils.WQ) ){
+							if(responseNumberForSuccessfulWriting == (TEST1 ? 1 : Utils.WQ) ){
 								continueListening = false;
 								resultFlag = "SUCCESS";
 							}
