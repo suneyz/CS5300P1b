@@ -12,6 +12,7 @@ public class Utils {
 	public static final int W = 4;
 	public static final int WQ = 3;
 	public static final int R = 2;
+	public static final String DATE_TIME_FORMAT = "EEE MMM dd HH:mm:ss z yyyy";
 	
 	public static final String[] RESPONSE_FLAGS_READING = new String[]{"SUCCESS", "TIME_OUT", "WRONG_FOUND_VERSION", "NOT_FOUND"};
 	public static final String[] RESPONSE_FLAGS_WRITING = new String[] {"SUCCESS", "WRITING_FAILED","TIME_OUT"};

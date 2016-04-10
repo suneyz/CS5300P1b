@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -16,6 +17,7 @@ import session.Session;
 
 public class RpcClient {
 
+	private static final boolean TEST1 = true;
 	/*method:generate a new unique callIDs
 	 * 
 	 */
@@ -29,25 +31,26 @@ public class RpcClient {
 	 * 
 	 */
 	public static Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
-		DatagramSocket rpcSocket = new DatagramSocket();
+		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		String callID = genCallID();
 		String resultMessage="";
 		String resultStatus="";
 		
-		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_READ, sessionID, ""+versionNumber ));
+		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_READ, sessionID, String.valueOf(versionNumber) ));
 		byte[] outBuf = sentInfo.getBytes();
+		System.out.println("---Client sent info "+sentInfo);
 		
 		
 		//TODO: figure out whether this is Parallel or Sequential
 		for(InetAddress destArr : destAdds){
-			System.out.println("Client Sending Request");
+			System.out.println("--Client Sending Request");
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER + 1);
 			rpcSocket.send(sendPkt);
 		}
 		byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		
-		
+		System.out.println("--Client start waiting for res");
 		try{
 			boolean continueListening = true;
 			//record the number of received response, jump out before timeout when all responses has been received
@@ -60,14 +63,15 @@ public class RpcClient {
 				
 				//receive method will be blocked while no packet arriving, but the following won't be,
 				//so condition-check is necessary
+				System.out.println("--Client_Waiting_For_Server");
 				rpcSocket.receive(recvPkt);
-				
+				System.out.println("--Client_Received_Pakcet_FROM_Server");
 				//Since we are expecting different packet from N instances when writing, the address of each of 
 				// the arriving packet should be different
 				
 				if( recvPkt.getAddress()!=null &&( lastReceivedInetAddr== null || 
 						!lastReceivedInetAddr.equals(recvPkt.getAddress()) )   ){
-					
+					System.out.println("--Client_Processing_Pakcet_FROM_Server");
 					lastReceivedInetAddr = recvPkt.getAddress();
 					
 					byte[] receivedByteArray = recvPkt.getData();
@@ -80,8 +84,8 @@ public class RpcClient {
 					
 					//A successful read: same callID, a SessionFound status flag and versionNumber+1;
 					
-					if( receivedCallID.equals(callID) && receivedSessionID.equals(sessionID) ){
-						
+					//if( receivedCallID.equals(callID) && (true||receivedSessionID.equals(sessionID)) ){
+					if( receivedCallID.equals(callID) ){	
 						numberOfReceivedPkt++;
 						
 						/*if(receivedReadResult.equals("1")){
@@ -99,9 +103,12 @@ public class RpcClient {
 								
 							}
 						}*/
+						System.out.println("--Client : received packet got the right callID");
 						
 						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[2]);
-						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
+						System.out.println("--Client: receivedVersionNumber: "+receivedVersionNumber+", versionNumber :"+versionNumber);
+						if( versionNumber==receivedVersionNumber || TEST1&&receivedVersionNumber==0){
+							System.out.println("--Client:Got the right version number");
 							resultStatus = "SUCCESS";
 							resultMessage = receivedInfoArray[3];
 							
@@ -137,6 +144,7 @@ public class RpcClient {
 		Response res = new Response();
 		res.resStatus = resultStatus;
 		res.resMessage = resultMessage;
+		rpcSocket.close();
 		return res;
 	}
 	
@@ -153,7 +161,10 @@ public class RpcClient {
 		
 		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER);
 		String callID = genCallID();
-		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, sessionID, ""+versionNumber, message, date.toString() ));
+		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
+		String expireTimeStr = sdf.format(date);
+		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, 
+				sessionID, ""+versionNumber, message, expireTimeStr ));
 		
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
@@ -209,14 +220,14 @@ public class RpcClient {
 							resultFlag = "WRITING_FAILED";
 						}
 						
-						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
+						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3].trim() );
 						
 						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
 							//condition to successfully quit looping
-							if(responseNumberForSuccessfulWriting == Utils.WQ){
+							if(responseNumberForSuccessfulWriting == (TEST1 ? 1 : Utils.WQ) ){
 								continueListening = false;
 								resultFlag = "SUCCESS";
 							}
@@ -238,7 +249,7 @@ public class RpcClient {
 		res.resStatus = resultFlag;
 		res.resMessage = resultData;
 		res.locationData = String.join(Utils.SPLITTER, locationDataList);
-		
+		rpcSocket.close();
 		return res;
 	}
 }

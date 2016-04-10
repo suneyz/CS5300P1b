@@ -24,7 +24,7 @@ public class Session implements Serializable{
 	
 	private long serverID;
 	private String sessionID;
-	private long oldVersionNumber;
+	//private long oldVersionNumber;
 	private long versionNumber;
 	private String oldMessage;
 	private String message;
@@ -68,13 +68,13 @@ public class Session implements Serializable{
 	 * This method is used to refresh current session
 	 * Set new version number and expire time.
 	 */
-	public void refresh() {
-		
-		Calendar cal = Calendar.getInstance();
-		cal.add(Calendar.MINUTE, EXPIRE_TIME);
-		setExpireTime(cal.getTime());
-		setVersionNumber(versionNumber + 1);
-	}
+//	public void refresh() { 
+//		
+//		Calendar cal = Calendar.getInstance();
+//		cal.add(Calendar.MINUTE, EXPIRE_TIME);
+//		setExpireTime(cal.getTime());
+//		setVersionNumber(versionNumber + 1);
+//	}
 	
 	/*
 	 * SessionID getter
@@ -101,10 +101,10 @@ public class Session implements Serializable{
 	 * VersionNumber setter
 	 */
 	public void setVersionNumber(long versionNumber) {
-		if(versionNumber != 0) {
-			setOldVersionNumber(this.versionNumber);
-			this.oldMessage = message;
-		}
+//		if(versionNumber != 0) {
+//			setOldVersionNumber(this.versionNumber);
+//			this.oldMessage = message;
+//		}
 
 		this.versionNumber = versionNumber;
 	}
@@ -148,7 +148,7 @@ public class Session implements Serializable{
 	 * Message setter
 	 */
 	public void setMessage(String message) {
-		setOldMessage(message);
+		//setOldMessage(message);
 		this.message = message;
 	}
 
@@ -160,26 +160,26 @@ public class Session implements Serializable{
 		this.serverID = serverID;
 	}
 
-	public long getOldVersionNumber() {
-		return oldVersionNumber;
-	}
+//	public long getOldVersionNumber() {
+//		return oldVersionNumber;
+//	}
 
-	private void setOldVersionNumber(long oldVersionNumber) {
-		this.oldVersionNumber = oldVersionNumber;
-	}
+//	private void setOldVersionNumber(long oldVersionNumber) {
+//		this.oldVersionNumber = oldVersionNumber;
+//	}
 
-	public String getOldMessage() {
-		return oldMessage;
-	}
+//	public String getOldMessage() {
+//		return oldMessage;
+//	}
 
-	public void setOldMessage(String oldMessage) {
-		this.oldMessage = oldMessage;
-	}
+//	public void setOldMessage(String oldMessage) {
+//		this.oldMessage = oldMessage;
+//	}
 	
-	public String getMessageByVersionNumber(long versionNumber) {
-		if(versionNumber == this.oldVersionNumber) return oldMessage;
-		if(versionNumber == this.versionNumber) return message;
-		return null;
-	}
+//	public String getMessageByVersionNumber(long versionNumber) {
+//		if(versionNumber == this.oldVersionNumber) return oldMessage;
+//		if(versionNumber == this.versionNumber) return message;
+//		return null;
+//	}
 	
 }

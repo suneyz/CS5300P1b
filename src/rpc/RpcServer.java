@@ -5,8 +5,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 
 import rpc.Utils.*;
 import servelet.SessionServelet;
@@ -15,10 +18,11 @@ import session.Session;
 public class RpcServer {
 	
 	public static final boolean TEST = true;
+	private HashMap<String, Session> mp = new HashMap<String, Session>();
 	/*RPC Server Side method
 	 * 
 	 */
-	public void rpcCallRequestProcessor() throws IOException{
+	public void rpcCallRequestProcessor() throws IOException, ParseException, NumberFormatException{
 		//TODO:ÕâÀïÊÇ·ñÐèÒª·ÂÕÕRPCClientRead ½¨Á¢¶à¸öSocket
 		DatagramSocket rpcSocket = new DatagramSocket(Utils.PROJECT1_PORT_NUMBER+1);
 		//TODO: figure out what is the difference to be inside(original place) and outside
@@ -37,9 +41,10 @@ public class RpcServer {
 			
 			if( recvPkt.getAddress()!=null ){
 				System.out.println("A packet has arrived at server!");
-				InetAddress returnAddr = recvPkt.getAddress();
+				InetAddress returnAddr = TEST ? InetAddress.getLocalHost():recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				String requestInfo = new String(recvPkt.getData());
+				System.out.println("Server : received String is "+requestInfo);
 				String[] requestInfoArray = requestInfo.split(Utils.SPLITTER);
 				String operationCode = requestInfoArray[1];
 						
@@ -55,6 +60,7 @@ public class RpcServer {
 				
 				DatagramPacket sentPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, Utils.PROJECT1_PORT_NUMBER);
 				rpcSocket.send(sentPkt);	
+				System.out.println("Server-packet sent ");
 			}
 			
 		}
@@ -63,24 +69,30 @@ public class RpcServer {
 	/*sessionRead
 	 * read session message and return as byte array
 	 */
-	public byte[] sessionRead(String info){
+	public byte[] sessionRead(String info) throws ParseException, NumberFormatException{
 		
 		//information extraction
 		
 		String[] infoArray = info.split(Utils.SPLITTER);
 		String callID = infoArray[0];
 		String sessionID = infoArray[2]; 
-		Long requestVersionNumber = Long.parseLong(infoArray[3]);
+		System.out.println("BUGGGGGGG "+infoArray[3]);
+		String test = infoArray[3];
+		Long requestVersionNumber = Long.parseLong(infoArray[3].trim());
+		System.out.println("Server received versionNumber "+requestVersionNumber);
 		String readMessage="";//version
 		String readResult;
 		String responseInfo;
 		
 		// there will always be matched session,cookie hasn't time out, session won't time out
 		
-		Session session = TEST ? new Session("01_01_01") : SessionServelet.getSessionByID(sessionID);
-		readMessage = session.getMessageByVersionNumber(requestVersionNumber);
-		
-		//TODO: find out reading by versionNumber could go wrong or not!
+		Session session = TEST ? new Session("01-01-01") : SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
+		if(TEST) {
+			session.setVersionNumber(requestVersionNumber);
+			mp.put("01-01-01", session);
+		}
+		//readMessage = session.getMessageByVersionNumber(requestVersionNumber);
+		readMessage = session.getMessage();
 		
 		byte[] outBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		
@@ -121,31 +133,46 @@ public class RpcServer {
 //		}
 		
 		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, ""+requestVersionNumber, readMessage) ).getBytes();
-		
+		System.out.println("Server sent requestVersionNumber "+requestVersionNumber);
 		return outBuf;
 	}
 	
 	/*sessionWrite
 	 * write session message and return true or false
 	 * */
-	 public byte[] sessionWrite(String info){
+	 public byte[] sessionWrite(String info) throws ParseException{
 		 String[] infoArray = info.split(Utils.SPLITTER);
 		 String requestCallID = infoArray[0];
 		 String sessionID = infoArray[2];
 		 Long requestVersionNumber = Long.parseLong(infoArray[3]);
 		 String message = infoArray[4];	
-		 String expireTime = infoArray[5];
-         
-		 Session newSession = TEST? new Session("02_02_02") : SessionServelet.getSessionByID(sessionID);
-		 
-		 if(newSession == null){
-			 newSession = new Session(sessionID, message);
-			 if(!TEST) SessionServelet.addSessionToTable(newSession);
-		 }
-		 else{
-			 newSession.refresh();
-			 newSession.setMessage(message);
-		 }
+		 String expireTime = infoArray[5].trim();
+		 System.out.println("Generate Date input "+expireTime);
+		 //SimpleDateFormat formatter = new SimpleDateFormat(expireTime);
+		 SimpleDateFormat formatter = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
+		 Date expireDateTime = formatter.parse(expireTime);
+		 Session newSession;
+		 if(!TEST){
+        	 newSession = SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
+    		 
+    		 if(newSession == null){
+    			 newSession = new Session(sessionID, message);
+                 newSession.setVersionNumber(requestVersionNumber);
+    			 newSession.setMessage(message);
+    			 //TODO : double check time
+    			 newSession.setExpireTime(expireDateTime);
+    			 
+    			 SessionServelet.addSessionToTable(newSession);
+    		 }
+         }
+         else{
+        	 newSession = mp.get(sessionID);
+        	 if(newSession!=null) newSession.setMessage(message);
+        	 else {
+        		 newSession = new Session("2-2-2");
+        		 newSession.setMessage("failed to update the first one, so created a new one");
+        	 }
+         }
 		
 
 		 //String result = String.join(Utils.SPLITTER, Arrays.asList(callID));

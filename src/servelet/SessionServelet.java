@@ -34,7 +34,7 @@ public class SessionServelet extends HttpServlet{
 	public static final String COOKIE_NAME = "cs5300project1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
-	public static final String SESSIONID_SPLITTER = "_";
+	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
 	public static final long THREAD_SLEEP_TIME = 1000 * 60 * 5;
 	public static final int COOKIE_AGE = 300;
@@ -77,7 +77,9 @@ public class SessionServelet extends HttpServlet{
 			writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), Session.DEFAULT_MESSAGE, session.getExpireTime(), new InetAddress[3]);
 			
 		} else {
-			// there is an existing session, refresh current session
+			
+			// there is an existing session, create a new session with higher versionNumber
+			
 //			session = sessionTable.get(sessionID);
 //			session.refresh();
 			
@@ -91,7 +93,8 @@ public class SessionServelet extends HttpServlet{
 			session.setServerID(servID);
 			
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
-				writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), readResponse.resMessage, session.getExpireTime(), new InetAddress[3]); // TODO: replace INETADDRESS
+				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
+				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage, session.getExpireTime(), new InetAddress[3]); // TODO: replace INETADDRESS
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 					//TODO: handle the case when write operation fails
 				}
@@ -142,6 +145,8 @@ public class SessionServelet extends HttpServlet{
 		Response readResponse = read(sessionID, versionNumber, new InetAddress[3]); //TODO: replace address
 		session = new Session(sessionID);
 		
+		//TODO: need to check the result of read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
 		// check the parameter from jsp button
 		if(param.equals("Replace")) {
 			
@@ -158,7 +163,7 @@ public class SessionServelet extends HttpServlet{
 				session.setMessage(message);
 			}
 			
-			Response writeResponse = write(sessionID, versionNumber, message, session.getExpireTime(), new InetAddress[3]); //TODO: replace address
+			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), new InetAddress[3]); //TODO: replace address
 			
 			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 				session.setVersionNumber(versionNumber + 1);
@@ -175,14 +180,18 @@ public class SessionServelet extends HttpServlet{
 		} else if (param.equals("Logout")) {
 			// handle logout button
 			synchronized (this) {
+				
+				//TODO: check this
+				
 				// remove session from the session table
-				sessionTable.remove(session.getSessionID());
+				//sessionTable.remove(session.getSessionID());
 			}
 			
-			Response writeResponse = write(sessionID, versionNumber, message, Calendar.getInstance().getTime(), new InetAddress[3]); //TODO: replace address
+			//TODO: check this, commented because it not necessary, and currently not supported by RPC server write
+			//Response writeResponse = write(sessionID, versionNumber, message, Calendar.getInstance().getTime(), new InetAddress[3]); //TODO: replace address
 			
-			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) 
-				currCookie.setMaxAge(0); 
+			//if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) 
+			currCookie.setMaxAge(0); 
 			
 			// redirect to logout page
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
