@@ -47,6 +47,8 @@ public class SessionServelet extends HttpServlet{
 	
 	//-------------
 	
+	public static final boolean TEST = true;
+	
 	public static final String SERVER_0 = "10.148.3.224";
 	public static final String SERVER_1 = "10.132.3.234";
 	
@@ -97,9 +99,14 @@ public class SessionServelet extends HttpServlet{
 			
 			session = genSession();
 //			sessionTable.put(session.getSessionID(), session);
-			
+			if(TEST) {
+				System.out.println("First Time ping the web, rendering a new session......");
+			}
 			writeResponse = write(sessionID, 0, Session.DEFAULT_MESSAGE, session.getExpireTime(), addrs);
 			
+			if(TEST) {
+				System.out.println("Finish render new session.");
+			}
 		} else {
 			
 			// there is an existing session, create a new session with higher versionNumber
@@ -109,6 +116,10 @@ public class SessionServelet extends HttpServlet{
 			
 			//==========================
 //			currCookie.getValue();
+			
+			if(TEST) {
+				System.out.println("Have cookie, try to read old session......");
+			}
 			
 			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
 			
