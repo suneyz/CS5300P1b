@@ -90,6 +90,13 @@ public class SessionServelet extends HttpServlet{
 		// initialization
 		Session session;
 		Cookie currCookie = findCookie(request.getCookies());
+		if(TEST) {
+			if(currCookie == null) {
+				System.out.println("No cookie");
+			} else {
+				System.out.println("Have cookie, cookie data: " + currCookie.getValue());
+			}
+		}
 		String sessionID = getSessionIDFromCookie(currCookie);
 		Response writeResponse = null;
 		
@@ -144,6 +151,7 @@ public class SessionServelet extends HttpServlet{
 		request.setAttribute("session", session);
 		request.setAttribute("currTime", Calendar.getInstance().getTime());
 		request.setAttribute("cookieID", currCookie.getValue());
+		response.addCookie(currCookie);
 		response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 		RequestDispatcher dispacher = request.getRequestDispatcher("/");
 		dispacher.forward(request, response);
@@ -249,8 +257,8 @@ public class SessionServelet extends HttpServlet{
 	private Cookie findCookie(Cookie[] cookies){
 		if (cookies == null) return null;
 		for(Cookie cookie : cookies) {
-			String sessionID = getSessionIDFromCookie(cookie);
-			if(cookie.getName().equals(COOKIE_NAME) && sessionTable.containsKey(sessionID)) {
+//			String sessionID = getSessionIDFromCookie(cookie);
+			if(cookie.getName().equals(COOKIE_NAME)) {
 				return cookie;
 			}
 		}
