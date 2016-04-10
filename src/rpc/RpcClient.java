@@ -105,6 +105,12 @@ public class RpcClient {
 						}*/
 						System.out.println("--Client : received packet got the right callID");
 						
+						if(TEST1) {
+							for(int i = 0; i < receivedInfoArray.length; i++) {
+								System.out.println("Received information array " + i + " content: " + receivedInfoArray[i]);
+							}
+						}
+						
 						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[2]);
 						System.out.println("--Client: receivedVersionNumber: "+receivedVersionNumber+", versionNumber :"+versionNumber);
 						if( versionNumber==receivedVersionNumber || TEST1&&receivedVersionNumber==0){
@@ -170,7 +176,7 @@ public class RpcClient {
 		byte[] outBuf = sentInfo.getBytes();
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
-			
+			System.out.println("Client sending packet to server with IP: " + destAddr.getHostAddress());
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER);
 			rpcSocket.send(sendPkt);
 		}

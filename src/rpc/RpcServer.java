@@ -132,8 +132,11 @@ public class RpcServer {
 //			responseInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, readResult, sessionID, ""+versionNumber, readMessage));
 //		}
 		
-		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, ""+requestVersionNumber, readMessage) ).getBytes();
-		System.out.println("Server sent requestVersionNumber "+requestVersionNumber);
+		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, String.valueOf(requestVersionNumber), readMessage) ).getBytes();
+//		if(TEST) {
+			System.out.println("outBuf is : " + outBuf);
+//		}
+//		System.out.println("Server sent requestVersionNumber "+requestVersionNumber);
 		return outBuf;
 	}
 	

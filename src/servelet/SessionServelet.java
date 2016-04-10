@@ -3,6 +3,7 @@ package servelet;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -55,7 +56,7 @@ public class SessionServelet extends HttpServlet{
 	public static InetAddress addr0;
 	public static InetAddress addr1;
 	
-	public static InetAddress[] addrs = new InetAddress[2];
+	public static InetAddress[] addrs = new InetAddress[1];
 	
 	/*
 	 * Constructor
@@ -64,14 +65,15 @@ public class SessionServelet extends HttpServlet{
 	public SessionServelet() {
 		sessionTable = new ConcurrentHashMap<>();
 		createCleanupThread();
+		initializeRpcServer();
 		
 		// ========
 		
 		try {
 			addr0 = InetAddress.getByName(SERVER_0);
-			addr1 = InetAddress.getByName(SERVER_1);
+//			addr1 = InetAddress.getByName(SERVER_1);
 			addrs[0] = addr0;
-			addrs[1] = addr1;
+//			addrs[1] = addr1;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -105,7 +107,7 @@ public class SessionServelet extends HttpServlet{
 			// no existing session, render a new session
 			
 			session = genSession();
-//			sessionTable.put(session.getSessionID(), session);
+			addSessionToTable(session);
 			if(TEST) {
 				System.out.println("First Time ping the web, rendering a new session......");
 			}
@@ -341,6 +343,31 @@ public class SessionServelet extends HttpServlet{
 		}
 	}
 	
+	private void initializeRpcServer() {
+		Thread t = new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				RpcServer server = new RpcServer();
+				try {
+					server.rpcCallRequestProcessor();
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			
+		});
+		t.start();
+	}
+	
 	public static Session getSessionByIDVersion(String sessionID, String versionNumber){
 		return sessionTable.get(genTableKey(sessionID, versionNumber));
 	}
@@ -364,6 +391,8 @@ public class SessionServelet extends HttpServlet{
 	public static long getServID(){
 		return servID;
 	}
+	
+	
 	
 	
 }
