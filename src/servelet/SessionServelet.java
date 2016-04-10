@@ -2,6 +2,7 @@ package servelet;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -44,6 +45,16 @@ public class SessionServelet extends HttpServlet{
 	private static long servID = 0; // TODO: change it to read from local file
 	private static long rebootNum = 0; // TODO: change it to read from local file
 	
+	//-------------
+	
+	public static final String SERVER_0 = "10.148.3.224";
+	public static final String SERVER_1 = "10.132.3.234";
+	
+	public static InetAddress addr0;
+	public static InetAddress addr1;
+	
+	public static InetAddress[] addrs = new InetAddress[2];
+	
 	/*
 	 * Constructor
 	 * Create cleanup daemon thread
@@ -51,6 +62,19 @@ public class SessionServelet extends HttpServlet{
 	public SessionServelet() {
 		sessionTable = new ConcurrentHashMap<>();
 		createCleanupThread();
+		
+		// ========
+		
+		try {
+			addr0 = InetAddress.getByName(SERVER_0);
+			addr1 = InetAddress.getByName(SERVER_1);
+			addrs[0] = addr0;
+			addrs[1] = addr1;
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// ==========
 	}
 	
 	/*
@@ -74,7 +98,7 @@ public class SessionServelet extends HttpServlet{
 			session = genSession();
 //			sessionTable.put(session.getSessionID(), session);
 			
-			writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), Session.DEFAULT_MESSAGE, session.getExpireTime(), new InetAddress[3]);
+			writeResponse = write(sessionID, getVersionNumberFromCookie(currCookie), Session.DEFAULT_MESSAGE, session.getExpireTime(), addrs);
 			
 		} else {
 			
@@ -86,7 +110,7 @@ public class SessionServelet extends HttpServlet{
 			//==========================
 //			currCookie.getValue();
 			
-			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), new InetAddress[3]); // TODO: replace INETADDRESS
+			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
 			
 			session = genSession();
 			session.setSessionID(sessionID);
@@ -94,7 +118,7 @@ public class SessionServelet extends HttpServlet{
 			
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
 				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
-				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage, session.getExpireTime(), new InetAddress[3]); // TODO: replace INETADDRESS
+				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage, session.getExpireTime(), addrs); // TODO: replace INETADDRESS
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 					//TODO: handle the case when write operation fails
 				}
@@ -142,7 +166,7 @@ public class SessionServelet extends HttpServlet{
 //			session = sessionTable.get(sessionID);
 //		}
 		
-		Response readResponse = read(sessionID, versionNumber, new InetAddress[3]); //TODO: replace address
+		Response readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
 		session = new Session(sessionID);
 		
 		//TODO: need to check the result of read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -163,7 +187,7 @@ public class SessionServelet extends HttpServlet{
 				session.setMessage(message);
 			}
 			
-			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), new InetAddress[3]); //TODO: replace address
+			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), addrs); //TODO: replace address
 			
 			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 				session.setVersionNumber(versionNumber + 1);
@@ -231,7 +255,7 @@ public class SessionServelet extends HttpServlet{
 //				newSessionID = UUID.randomUUID().toString();
 //				newSessionID.replace(SPLITTER, "-");
 //			} while (sessionTable.containsKey(newSessionID));
-			newSessionID = servID + "_" + rebootNum + "_" + sessNum;
+			newSessionID = servID + SESSIONID_SPLITTER + rebootNum + SESSIONID_SPLITTER + sessNum;
 			sessNum++;
 			return new Session(newSessionID);
 	}
