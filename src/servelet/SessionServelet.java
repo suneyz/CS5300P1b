@@ -70,7 +70,7 @@ public class SessionServelet extends HttpServlet{
 		// ========
 		
 		try {
-			addr0 = InetAddress.getByName(SERVER_0);
+			addr0 = InetAddress.getByName(SERVER_1);
 //			addr1 = InetAddress.getByName(SERVER_1);
 			addrs[0] = addr0;
 //			addrs[1] = addr1;
