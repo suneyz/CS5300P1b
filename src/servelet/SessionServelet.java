@@ -1,11 +1,19 @@
 package servelet;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import session.Session;
@@ -38,6 +46,7 @@ public class SessionServelet extends HttpServlet{
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
+	public static final String LOCAL_INFO_FILE = "server_info";
 	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
 	public static final int COOKIE_AGE = 10;
 	
@@ -74,6 +83,13 @@ public class SessionServelet extends HttpServlet{
 	public SessionServelet() {
 		sessionTable = new ConcurrentHashMap<>();
 		createCleanupThread();
+		
+		if(restoreServerInfo()) {
+			this.rebootNum++;
+		}
+		saveServerInfo();
+		
+		System.out.println("reboot number is: " + rebootNum);
 		
 		// ========
 		
@@ -236,10 +252,12 @@ public class SessionServelet extends HttpServlet{
 		} else if (param.equals("Logout")) {
 			// handle logout button
 			
-			currCookie.setMaxAge(0); 
+			if(currCookie != null) {
+				currCookie.setMaxAge(0); 
+				response.addCookie(currCookie);
+			}
 			
 			// redirect to logout page
-			response.addCookie(currCookie);
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 			response.sendRedirect(LOG_OUT);
 		} else {
@@ -384,7 +402,30 @@ public class SessionServelet extends HttpServlet{
 		return servID;
 	}
 	
+	public boolean restoreServerInfo() {
+		try (BufferedReader br = new BufferedReader(new FileReader(LOCAL_INFO_FILE)))
+		{
+			String serverID = br.readLine();
+			String rebootNum = br.readLine();
+			this.servID = Long.parseLong(serverID);
+			this.rebootNum = Long.parseLong(rebootNum);
+			return true;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+		
+	}
 	
-	
-	
+	public void saveServerInfo() {
+		System.out.println("Saving server information......");
+		List<String> lines = Arrays.asList(String.valueOf(servID), String.valueOf(rebootNum));
+		Path file = Paths.get(LOCAL_INFO_FILE);
+		try {
+			Files.write(file, lines, Charset.forName("UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
