@@ -58,6 +58,15 @@ public class SessionServelet extends HttpServlet{
 	
 	public static InetAddress[] addrs = new InetAddress[1];
 	
+	
+	
+	@Override
+	public void init() throws ServletException {
+		// TODO Auto-generated method stub
+		super.init();
+		initializeRpcServer();
+	}
+
 	/*
 	 * Constructor
 	 * Create cleanup daemon thread
@@ -65,12 +74,11 @@ public class SessionServelet extends HttpServlet{
 	public SessionServelet() {
 		sessionTable = new ConcurrentHashMap<>();
 		createCleanupThread();
-		initializeRpcServer();
 		
 		// ========
 		
 		try {
-			addr0 = InetAddress.getByName(SERVER_1);
+			addr0 = InetAddress.getByName(SERVER_0);
 //			addr1 = InetAddress.getByName(SERVER_1);
 			addrs[0] = addr0;
 //			addrs[1] = addr1;
@@ -107,7 +115,8 @@ public class SessionServelet extends HttpServlet{
 			// no existing session, render a new session
 			
 			session = genSession();
-			addSessionToTable(session);
+//			addSessionToTable(session);
+			
 			if(TEST) {
 				System.out.println("First Time ping the web, rendering a new session......");
 			}
