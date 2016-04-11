@@ -41,7 +41,7 @@ public class RpcServer {
 			
 			if( recvPkt.getAddress()!=null ){
 				System.out.println("A packet has arrived at server!");
-				InetAddress returnAddr = TEST ? InetAddress.getLocalHost():recvPkt.getAddress();
+				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				String requestInfo = new String(recvPkt.getData());
 				System.out.println("Server : received String is "+requestInfo);
@@ -58,7 +58,7 @@ public class RpcServer {
 						break;	
 				}
 				
-				DatagramPacket sentPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, Utils.PROJECT1_PORT_NUMBER);
+				DatagramPacket sentPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
 				rpcSocket.send(sentPkt);	
 				System.out.println("Server-packet sent ");
 			}
