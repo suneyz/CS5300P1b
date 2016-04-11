@@ -180,13 +180,29 @@ public class SessionServelet extends HttpServlet{
 		String param = request.getParameter("req");
 		String message = request.getParameter("message");
 		Cookie currCookie = findCookie(request.getCookies());
-		String sessionID = getSessionIDFromCookie(currCookie);
-		long versionNumber = getVersionNumberFromCookie(currCookie);
-		String locationData = getLocationDataFromCookie(currCookie);
+		String sessionID;
+		long versionNumber;
+//		String locationData;
 		Session session;
+		Response readResponse;
 		
-		Response readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
-		session = new Session(sessionID);
+		// Check if cookie is expired before button is clicked
+		if(currCookie != null) {
+			sessionID = getSessionIDFromCookie(currCookie);
+			versionNumber = getVersionNumberFromCookie(currCookie);
+//			locationData = getLocationDataFromCookie(currCookie);
+			readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
+			session = new Session(sessionID);
+		} else {
+			session = genSession(true);
+			sessionID = session.getSessionID();
+			versionNumber = -1;
+			
+		}
+		
+		
+		
+		
 		
 		//TODO: need to check the result of read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		
