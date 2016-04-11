@@ -50,7 +50,7 @@ public class SessionServelet extends HttpServlet{
 	
 	public static final boolean TEST = true;
 	
-	public static final String SERVER_0 = "10.148.3.224";
+	public static final String SERVER_0 = "10.145.14.149";
 	public static final String SERVER_1 = "10.132.3.234";
 	
 	public static InetAddress addr0;
@@ -114,7 +114,7 @@ public class SessionServelet extends HttpServlet{
 		if(sessionID == null) {
 			// no existing session, render a new session
 			
-			session = genSession();
+			session = genSession(true);
 //			addSessionToTable(session);
 			
 			if(TEST) {
@@ -141,7 +141,7 @@ public class SessionServelet extends HttpServlet{
 			
 			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
 			
-			session = genSession();
+			session = genSession(false);
 			session.setSessionID(sessionID);
 			session.setServerID(servID);
 			System.out.println("Read response status is: " + readResponse.resStatus);
@@ -152,6 +152,7 @@ public class SessionServelet extends HttpServlet{
 				System.out.println("Hash map size is: " + sessionTable.size());
 				System.out.println("Expire time is: " + session.getExpireTime());
 				session.setVersionNumber(updatedVersionNumber);
+				session.setMessage(readResponse.resMessage);
 				System.out.println("Version Number updated is: " + updatedVersionNumber);
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 					//TODO: handle the case when write operation fails
@@ -231,6 +232,9 @@ public class SessionServelet extends HttpServlet{
 				session.setVersionNumber(versionNumber + 1);
 			}
 			
+			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
+			currCookie.setMaxAge(COOKIE_AGE);
+			
 			// forward response and request to jsp 
 			request.setAttribute("session", session);
 			request.setAttribute("currTime", Calendar.getInstance().getTime());
@@ -256,6 +260,7 @@ public class SessionServelet extends HttpServlet{
 			currCookie.setMaxAge(0); 
 			
 			// redirect to logout page
+			response.addCookie(currCookie);
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 			response.sendRedirect(LOG_OUT);
 		} else {
@@ -288,14 +293,14 @@ public class SessionServelet extends HttpServlet{
 	 * This method is used to render a new session
 	 * @return new session
 	 */
-	public static Session genSession() {
+	public static Session genSession(boolean incr) {
 			String newSessionID = null;
 //			do {
 //				newSessionID = UUID.randomUUID().toString();
 //				newSessionID.replace(SPLITTER, "-");
 //			} while (sessionTable.containsKey(newSessionID));
 			newSessionID = servID + SESSIONID_SPLITTER + rebootNum + SESSIONID_SPLITTER + sessNum;
-			sessNum++;
+			if(incr) sessNum++;
 			return new Session(newSessionID);
 	}
 	
