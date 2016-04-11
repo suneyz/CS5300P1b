@@ -86,10 +86,14 @@ public class RpcServer {
 		
 		// there will always be matched session,cookie hasn't time out, session won't time out
 		
-		Session session = TEST ? new Session("01-01-01") : SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
-		if(TEST) {
-			session.setVersionNumber(requestVersionNumber);
-			mp.put("01-01-01", session);
+		Session session = SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
+//		if(TEST) {
+//			session.setVersionNumber(requestVersionNumber);
+//			mp.put("01-01-01", session);
+//		}
+		
+		if(session == null) {
+			return Utils.NOT_FOUND.getBytes();
 		}
 		//readMessage = session.getMessageByVersionNumber(requestVersionNumber);
 		readMessage = session.getMessage();
@@ -113,7 +117,7 @@ public class RpcServer {
 //			//readResult = "1";
 //			//get the message with the specified version
 //			
-//			//TODO : implement a new bi-version structure inside a session, 
+//			//TODO : implement a new bi-version structure inside a session
 //			//different version may relate to diff val
 //			Long curVersionNumber=session.getVersionNumber();
 //			//TODO: when reading, should we set the curVersion to be the request version+1? or oldversion +1?
@@ -121,7 +125,7 @@ public class RpcServer {
 //			session.setVersionNumber(requestVersionNumber+1);
 //			readMessage=session.getMessage();
 //			
-//			//if we get the message of right versionNumber, 
+//			//if we get the message of right versionNumber
 //			readResult = "1";
 //			
 //			//else , we could set the readMessage to the description of what goes wrong
@@ -155,32 +159,31 @@ public class RpcServer {
 		 SimpleDateFormat formatter = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
 		 Date expireDateTime = formatter.parse(expireTime);
 		 Session newSession;
-		 if(!TEST){
-        	 newSession = SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
+//		 if(TEST){
+//        	 newSession = SessionServelet.getSessionByIDVersion(sessionID, String.valueOf(requestVersionNumber));
     		 
-    		 if(newSession == null){
-    			 newSession = new Session(sessionID, message);
-                 newSession.setVersionNumber(requestVersionNumber);
-    			 newSession.setMessage(message);
-    			 //TODO : double check time
-    			 newSession.setExpireTime(expireDateTime);
-    			 
-    			 SessionServelet.addSessionToTable(newSession);
-    		 }
-         }
-         else{
-        	 newSession = mp.get(sessionID);
-        	 if(newSession!=null) newSession.setMessage(message);
-        	 else {
-        		 newSession = new Session("2-2-2");
-        		 newSession.setMessage("failed to update the first one, so created a new one");
-        	 }
-         }
-		
+    		 newSession = new Session(sessionID, message);
+             newSession.setVersionNumber(requestVersionNumber);
+			 newSession.setMessage(message);
+			 //TODO : double check time
+			 newSession.setExpireTime(expireDateTime);
+			 
+			 SessionServelet.addSessionToTable(newSession);
+//         }
+//         else{
+//        	 newSession = mp.get(sessionID);
+//        	 if(newSession!=null) newSession.setMessage(message);
+//        	 else {
+//        		 newSession = new Session("2-2-2");
+//        		 newSession.setMessage("failed to update the first one, so created a new one");
+//        	 }
+//         }
+//		
 
 		 //String result = String.join(Utils.SPLITTER, Arrays.asList(callID));
 		 String result = String.join(Utils.SPLITTER, Arrays.asList(requestCallID, SessionServelet.getServID()+"",
 				 newSession.getSessionID(), ""+newSession.getVersionNumber() ));
+		 System.out.println("Returned message from sessionWrite() is: " + result);
 		 return result.getBytes();
 	 }
 }

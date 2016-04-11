@@ -19,7 +19,7 @@ public class Session implements Serializable{
 	 */
 	private static final long serialVersionUID = -5477386214535673194L;
 	public static final String DEFAULT_MESSAGE = "Hello User!";
-	public static final int EXPIRE_TIME = 5;
+	public static final int EXPIRE_TIME = 10;	// In seconds
 	public static final int SESSION_TIMEOUT_SECS = 50;
 	
 	private long serverID;
@@ -41,7 +41,7 @@ public class Session implements Serializable{
 		// initialize the session class without a sessionID
 		Calendar cal = Calendar.getInstance();
 		setCreateTime(cal.getTime());
-		cal.add(Calendar.MINUTE, EXPIRE_TIME); // set the expire time stamp to be 5 minutes later
+		cal.add(Calendar.SECOND, EXPIRE_TIME); // set the expire time stamp to be 5 minutes later
 		setExpireTime(cal.getTime());
 		setMessage(DEFAULT_MESSAGE);
 		setVersionNumber(0);

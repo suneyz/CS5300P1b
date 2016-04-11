@@ -144,10 +144,15 @@ public class SessionServelet extends HttpServlet{
 			session = genSession();
 			session.setSessionID(sessionID);
 			session.setServerID(servID);
-			
+			System.out.println("Read response status is: " + readResponse.resStatus);
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
+				System.out.println("====Servelet initializing write call......");
 				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
 				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage.trim(), session.getExpireTime(), addrs); // TODO: replace INETADDRESS
+				System.out.println("Hash map size is: " + sessionTable.size());
+				System.out.println("Expire time is: " + session.getExpireTime());
+				session.setVersionNumber(updatedVersionNumber);
+				System.out.println("Version Number updated is: " + updatedVersionNumber);
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 					//TODO: handle the case when write operation fails
 				}
@@ -156,7 +161,10 @@ public class SessionServelet extends HttpServlet{
 		
 		// update coockie
 		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
+		System.out.println("Version Number saved to Cookie is: " + session.getVersionNumber());
 		currCookie.setMaxAge(COOKIE_AGE);
+		
+		
 		
 		// pass session to jsp file
 		request.setAttribute("session", session);
@@ -344,9 +352,12 @@ public class SessionServelet extends HttpServlet{
 	 * Perform session table clean up operation 
 	 */
 	private synchronized void cleanup() {
+		System.out.println("Cleanning expired session......");
 		for(String sessionID : sessionTable.keySet()) {
 			Calendar cal = Calendar.getInstance();
 			if(sessionTable.get(sessionID).getExpireTime().before(cal.getTime())) {
+				System.out.println("Cleaning session with SessionID: " + sessionID);
+				System.out.println("Its expire time is: " + sessionTable.get(sessionID).getExpireTime());
 				sessionTable.remove(sessionID);
 			}
 		}

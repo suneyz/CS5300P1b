@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,13 +70,20 @@ public class RpcClient {
 				//Since we are expecting different packet from N instances when writing, the address of each of 
 				// the arriving packet should be different
 				
-				if( recvPkt.getAddress()!=null &&( lastReceivedInetAddr== null || 
-						!lastReceivedInetAddr.equals(recvPkt.getAddress()) )   ){
+//				if( recvPkt.getAddress()!=null &&( lastReceivedInetAddr== null || 
+//						!lastReceivedInetAddr.equals(recvPkt.getAddress()) )   ){
+				if( recvPkt.getAddress()!=null) {
 					System.out.println("--Client_Processing_Pakcet_FROM_Server");
 					lastReceivedInetAddr = recvPkt.getAddress();
 					
 					byte[] receivedByteArray = recvPkt.getData();
 					String receivedInfo = new String(receivedByteArray);
+					
+					if(receivedInfo.equals(Utils.NOT_FOUND)) {
+						// TODO: Handle not found case here.
+						System.out.println("NOT FOUND!!!!!!");
+					}
+					System.out.println("Received info is: " + receivedInfo);
 					String[] receivedInfoArray = receivedInfo.split(Utils.SPLITTER); 
 					String receivedCallID = receivedInfoArray[0];
 					//String receivedReadResult = receivedInfoArray[1];
@@ -117,7 +125,7 @@ public class RpcClient {
 							System.out.println("--Client:Got the right version number");
 							resultStatus = "SUCCESS";
 							resultMessage = receivedInfoArray[3];
-							
+							System.out.println("resultMessage in client read is: " + resultMessage);
 							// if a success response has been received, stop the looping which means stop listening
 							continueListening = false;
 						}
@@ -173,7 +181,7 @@ public class RpcClient {
 		
 		String sentInfo = new String();
 		sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_WRITE, 
-				sessionID, ""+versionNumber, message, expireTimeStr ));
+				sessionID, String.valueOf(versionNumber), message, expireTimeStr ));
 		System.out.println("client sent info content: "+sentInfo);
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
@@ -197,6 +205,7 @@ public class RpcClient {
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		String resultFlag="";
 		String resultData="";
+//		Session resultSession = new Session("-1");
 		ArrayList <String> locationDataList = new ArrayList<String>();
 		boolean continueListening = true;
 	    //TODO: rpc.setSoTimeout();
@@ -211,9 +220,14 @@ public class RpcClient {
 				System.out.println("Client Waiting for coming packet");
 				rpcSocket.receive(recvPkt);	
 				System.out.println("Client-packet coming!!!");
+				System.out.println("Client-packet data is: " + new String(recvPkt.getData()));
 				//execute when packets are actually coming
-				if(recvPkt.getAddress()!=null &&(lastReceivedAddress == null || !lastReceivedAddress.equals(recvPkt.getAddress()) )){
+				
+//				if(recvPkt.getAddress()!=null && (lastReceivedAddress == null || 
+//						!lastReceivedAddress.equals(recvPkt.getAddress()) )){
 					
+				if(recvPkt.getAddress()!=null) {
+					System.out.println("The data received is not null!");
 					lastReceivedAddress = recvPkt.getAddress();
 					
 					byte[] receivedByteArray = recvPkt.getData();
@@ -228,27 +242,32 @@ public class RpcClient {
 					
 					// a countable packet
 					if( receivedCallID.equals(callID) ){
-						
+						System.out.println("received the same call ID!");
 						numberOfReceivedPkt++;
 						// condition : when no more packet is coming, end the loop
 						if( numberOfReceivedPkt==Utils.N ) {
 							continueListening = false;
 							resultFlag = "WRITING_FAILED";
+							break; //TODO: TO SU LAO BAN: Why not use break???
 						}
 						
 						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3].trim() );
-						
-						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
+
+//						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
+							System.out.println("");
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
 							//condition to successfully quit looping
 							if(responseNumberForSuccessfulWriting == (TEST1 ? 1 : Utils.WQ) ){
+								System.out.println("Write success!");
 								continueListening = false;
 								resultFlag = "SUCCESS";
+								break;
+//								resultSession = getSessionFromTransferredString(receivedInfo);
 							}
 							
-						}
+//						}
 					}	
 				}
 				
@@ -265,7 +284,21 @@ public class RpcClient {
 		res.resStatus = resultFlag;
 		res.resMessage = resultData;
 		res.locationData = String.join(Utils.SPLITTER, locationDataList);
+//		res.session = resultSession;
 		rpcSocket.close();
 		return res;
+	}
+	
+	public static Session getSessionFromTransferredString(String info) {
+		String[] infoArray = info.split(Utils.SPLITTER);
+		Session session = new Session(infoArray[2], infoArray[4]);
+		SimpleDateFormat formatter = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
+		try {
+			session.setExpireTime(formatter.parse(infoArray[5].trim()));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return session;
 	}
 }
