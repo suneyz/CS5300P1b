@@ -185,12 +185,6 @@ public class RpcClient {
 		System.out.println("client sent info content: "+sentInfo);
 		// TODO: what if length over 512bytes? currently regard the length of message within 512bytes
 		byte[] outBuf = sentInfo.getBytes();
-//		System.out.println("SessionID size is: " + sessionID.length());
-//		System.out.println("VersionNumber size is: " + versionNumber);
-//		System.out.println("Message size is: " + message.length());
-//		System.out.println("String size is: " + sentInfo.length());
-//		System.out.println("confirm the byte data: " + new String(outBuf));
-//		System.out.println("byte size is: " + outBuf.length);
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
 			System.out.println("Client sending packet to server with IP: " + destAddr.getHostAddress());
@@ -205,7 +199,6 @@ public class RpcClient {
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 		String resultFlag="";
 		String resultData="";
-//		Session resultSession = new Session("-1");
 		ArrayList <String> locationDataList = new ArrayList<String>();
 		boolean continueListening = true;
 	    //TODO: rpc.setSoTimeout();
@@ -264,7 +257,6 @@ public class RpcClient {
 								continueListening = false;
 								resultFlag = "SUCCESS";
 								break;
-//								resultSession = getSessionFromTransferredString(receivedInfo);
 							}
 							
 //						}

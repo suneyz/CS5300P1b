@@ -115,7 +115,6 @@ public class SessionServelet extends HttpServlet{
 			// no existing session, render a new session
 			
 			session = genSession(true);
-//			addSessionToTable(session);
 			
 			if(TEST) {
 				System.out.println("First Time ping the web, rendering a new session......");
@@ -128,12 +127,6 @@ public class SessionServelet extends HttpServlet{
 		} else {
 			
 			// there is an existing session, create a new session with higher versionNumber
-			
-//			session = sessionTable.get(sessionID);
-//			session.refresh();
-			
-			//==========================
-//			currCookie.getValue();
 			
 			if(TEST) {
 				System.out.println("Have cookie, try to read old session......");
@@ -165,8 +158,6 @@ public class SessionServelet extends HttpServlet{
 		System.out.println("Version Number saved to Cookie is: " + session.getVersionNumber());
 		currCookie.setMaxAge(COOKIE_AGE);
 		
-		
-		
 		// pass session to jsp file
 		request.setAttribute("session", session);
 		request.setAttribute("currTime", Calendar.getInstance().getTime());
@@ -193,17 +184,6 @@ public class SessionServelet extends HttpServlet{
 		long versionNumber = getVersionNumberFromCookie(currCookie);
 		String locationData = getLocationDataFromCookie(currCookie);
 		Session session;
-//		boolean isNewSession = false;
-		
-		// render a new session if the old session is already expired
-//		if(sessionID == null || !sessionTable.containsKey(sessionID)) {
-//			session = genSession();
-//			sessionTable.put(session.getSessionID(), session);
-//			isNewSession = true;
-//			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session));
-//		} else {
-//			session = sessionTable.get(sessionID);
-//		}
 		
 		Response readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
 		session = new Session(sessionID);
@@ -212,13 +192,7 @@ public class SessionServelet extends HttpServlet{
 		
 		// check the parameter from jsp button
 		if(param.equals("Replace")) {
-			
-//			if(!isNewSession) {
-//				// handle message replace button
-//				session.refresh();
-//				// generate cookie
-//				currCookie.setValue(genCookieIDFromSession(session));
-//			}
+			// 
 			
 			
 			// update message if input is valid
@@ -245,18 +219,7 @@ public class SessionServelet extends HttpServlet{
 			dispatcher.forward(request, response);
 		} else if (param.equals("Logout")) {
 			// handle logout button
-			synchronized (this) {
-				
-				//TODO: check this
-				
-				// remove session from the session table
-				//sessionTable.remove(session.getSessionID());
-			}
 			
-			//TODO: check this, commented because it not necessary, and currently not supported by RPC server write
-			//Response writeResponse = write(sessionID, versionNumber, message, Calendar.getInstance().getTime(), new InetAddress[3]); //TODO: replace address
-			
-			//if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) 
 			currCookie.setMaxAge(0); 
 			
 			// redirect to logout page
@@ -281,7 +244,6 @@ public class SessionServelet extends HttpServlet{
 	private Cookie findCookie(Cookie[] cookies){
 		if (cookies == null) return null;
 		for(Cookie cookie : cookies) {
-//			String sessionID = getSessionIDFromCookie(cookie);
 			if(cookie.getName().equals(COOKIE_NAME)) {
 				return cookie;
 			}
@@ -294,11 +256,7 @@ public class SessionServelet extends HttpServlet{
 	 * @return new session
 	 */
 	public static Session genSession(boolean incr) {
-			String newSessionID = null;
-//			do {
-//				newSessionID = UUID.randomUUID().toString();
-//				newSessionID.replace(SPLITTER, "-");
-//			} while (sessionTable.containsKey(newSessionID));
+			String newSessionID;
 			newSessionID = servID + SESSIONID_SPLITTER + rebootNum + SESSIONID_SPLITTER + sessNum;
 			if(incr) sessNum++;
 			return new Session(newSessionID);
@@ -377,13 +335,10 @@ public class SessionServelet extends HttpServlet{
 				try {
 					server.rpcCallRequestProcessor();
 				} catch (NumberFormatException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (ParseException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -408,11 +363,7 @@ public class SessionServelet extends HttpServlet{
 	private Response write(String sessionID, long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException {
 		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, date, destAddrs);
 	}
-	
-	
-	
-	// =======
-	
+
 	public static long getServID(){
 		return servID;
 	}
