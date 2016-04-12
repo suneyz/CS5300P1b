@@ -26,7 +26,6 @@ public class Session implements Serializable{
 	private String sessionID;
 	//private long oldVersionNumber;
 	private long versionNumber;
-	private String oldMessage;
 	private String message;
 	private Date expireTime;
 	private Date createTime;
@@ -160,26 +159,4 @@ public class Session implements Serializable{
 		this.serverID = serverID;
 	}
 
-//	public long getOldVersionNumber() {
-//		return oldVersionNumber;
-//	}
-
-//	private void setOldVersionNumber(long oldVersionNumber) {
-//		this.oldVersionNumber = oldVersionNumber;
-//	}
-
-//	public String getOldMessage() {
-//		return oldMessage;
-//	}
-
-//	public void setOldMessage(String oldMessage) {
-//		this.oldMessage = oldMessage;
-//	}
-	
-//	public String getMessageByVersionNumber(long versionNumber) {
-//		if(versionNumber == this.oldVersionNumber) return oldMessage;
-//		if(versionNumber == this.versionNumber) return message;
-//		return null;
-//	}
-	
 }

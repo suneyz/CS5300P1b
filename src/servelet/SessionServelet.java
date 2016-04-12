@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import session.Session;
 import javax.servlet.RequestDispatcher;
@@ -56,6 +55,7 @@ public class SessionServelet extends HttpServlet{
 	private static long rebootNum = 0; // TODO: change it to read from local file
 	
 	//-------------
+	// BELOW ARE TEST PARAMETER NEED TO BE CHANGED
 	
 	public static final boolean TEST = true;
 	
@@ -66,6 +66,8 @@ public class SessionServelet extends HttpServlet{
 	public static InetAddress addr1;
 	
 	public static InetAddress[] addrs = new InetAddress[1];
+	
+	//----------------
 	
 	
 	
@@ -85,7 +87,7 @@ public class SessionServelet extends HttpServlet{
 		createCleanupThread();
 		
 		if(restoreServerInfo()) {
-			this.rebootNum++;
+			SessionServelet.rebootNum++;
 		}
 		saveServerInfo();
 		
@@ -407,8 +409,8 @@ public class SessionServelet extends HttpServlet{
 		{
 			String serverID = br.readLine();
 			String rebootNum = br.readLine();
-			this.servID = Long.parseLong(serverID);
-			this.rebootNum = Long.parseLong(rebootNum);
+			SessionServelet.servID = Long.parseLong(serverID);
+			SessionServelet.rebootNum = Long.parseLong(rebootNum);
 			return true;
 
 		} catch (IOException e) {
