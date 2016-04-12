@@ -252,7 +252,7 @@ public class RpcClient {
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
 							//condition to successfully quit looping
-							if(responseNumberForSuccessfulWriting == (TEST1 ? 1 : Utils.WQ) ){
+							if(responseNumberForSuccessfulWriting == (Utils.WQ) ){
 								System.out.println("Write success!");
 								continueListening = false;
 								resultFlag = "SUCCESS";

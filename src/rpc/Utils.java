@@ -11,7 +11,7 @@ public class Utils {
 	//need to figure out where to get these information, may be from simpleDB
 	public static final int N = 5;
 	public static final int W = 4;
-	public static final int WQ = 3;
+	public static final int WQ = 2;
 	public static final int R = 2;
 	public static final String DATE_TIME_FORMAT = "EEE MMM dd HH:mm:ss z yyyy"; //"HH:mm:ss";
 	

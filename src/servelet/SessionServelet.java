@@ -59,13 +59,13 @@ public class SessionServelet extends HttpServlet{
 	
 	public static final boolean TEST = true;
 	
-	public static final String SERVER_0 = "10.145.14.149";
+	public static final String SERVER_0 = "10.148.9.172";
 	public static final String SERVER_1 = "10.132.3.234";
 	
 	public static InetAddress addr0;
 	public static InetAddress addr1;
 	
-	public static InetAddress[] addrs = new InetAddress[1];
+	public static InetAddress[] addrs = new InetAddress[2];
 	
 	//----------------
 	
@@ -97,9 +97,9 @@ public class SessionServelet extends HttpServlet{
 		
 		try {
 			addr0 = InetAddress.getByName(SERVER_0);
-//			addr1 = InetAddress.getByName(SERVER_1);
+			addr1 = InetAddress.getByName(SERVER_1);
 			addrs[0] = addr0;
-//			addrs[1] = addr1;
+			addrs[1] = addr1;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
