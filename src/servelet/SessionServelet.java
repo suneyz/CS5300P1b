@@ -3,6 +3,9 @@ package servelet;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -21,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import session.Session;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -44,14 +48,18 @@ public class SessionServelet extends HttpServlet{
 	 */
 	private static final long serialVersionUID = 1L;
 	private static ConcurrentHashMap<String, Session> sessionTable;
-	private static ConcurrentHashMap<Long, InetAddress> serverMap;
+	private ConcurrentHashMap<Long, InetAddress> serverMap;
 	public static final String COOKIE_NAME = "CS5300PROJECT1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
-	public static final String LOCAL_INFO_FILE = "/server_info";
-	public static final String SERVER_MAPPING_FILE = "/server_mapping";
+	//public static final String LOCAL_INFO_FILE = "D:/Cornell/16spring/CS5300/p1b/Project1b/WebContent/WEB-INF/server_info.txt";
+	//public static final String SERVER_MAPPING_FILE = "D:/Cornell/16spring/CS5300/p1b/Project1b/WebContent/WEB-INF/server_mapping.txt";
+	//public static final String SERVER_MAPPING_FILE = "/Users/apple/Desktop/test/server_mapping.txt";
+	//public static final String LOCAL_INFO_FILE = "/Users/apple/Desktop/test/server_info.txt";
+	public static final String LOCAL_INFO_FILE = "/server_info.txt";
+	public static final String SERVER_MAPPING_FILE = "/server_mapping.txt";
 	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
 	public static final int COOKIE_AGE = 10;
 	
@@ -99,9 +107,11 @@ public class SessionServelet extends HttpServlet{
 		if(restoreServerInfo()) {
 			SessionServelet.rebootNum++;
 		}
+		serverMap = new ConcurrentHashMap();
 		saveServerInfo();
-		restoreServerMapping();
+		restoreServerMapping1();
 		System.out.println("reboot number is: " + rebootNum);
+		
 		
 		// ========
 		
@@ -150,6 +160,9 @@ public class SessionServelet extends HttpServlet{
 				System.out.println("First Time ping the web, rendering a new session......");
 			}
 			addrs = getNIPAddress(Utils.WQ);
+			
+			System.out.println("Preparing for PRC write : addrs generated");
+			System.out.println(addrs[0].toString());
 			writeResponse = write(session.getSessionID(), 0, session.getMessage(), session.getExpireTime(), addrs);
 			
 			if(TEST) {
@@ -450,21 +463,44 @@ public class SessionServelet extends HttpServlet{
 			e.printStackTrace();
 		}
 	}
+	private boolean restoreServerMapping1(){
+		
+		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE))){
+			String currLine;
+			while((currLine = br.readLine()) != null) {
+				String serverID = currLine.split(" +")[1].split("_")[1];
+				currLine = br.readLine();
+				String ip = currLine.split(" +")[2];
+				System.out.println("ServerID:¡¡" + serverID);
+				System.out.println("IP: " + ip);
+				System.out.println(serverMap == null);
+				serverMap.put(Long.parseLong(serverID), InetAddress.getByName(ip));
+			}
+			
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
 	
 	private boolean restoreServerMapping() {
 		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE)))
 		{
 			String currLine;
 			while((currLine = br.readLine()) != null) {
+				 
+				
 				
 //		    	String testLine = "\"10\"\"0\"";
 //		    	String newLine = testLine.replace("\"", " ");
-		    	String[] info = currLine.split("\"+");
+		    	
 //		    	for(String s : info) {
 //		    		System.out.println(s);
 //		    	}
 						
 //				String info[] = newLine.split(SPLITTER);
+				String[] info = currLine.split("\"+");
 				String items[] = info[0].split("+");
 				serverMap.put(Long.parseLong(items[1]), InetAddress.getByName(info[1]));
 			}
@@ -478,21 +514,23 @@ public class SessionServelet extends HttpServlet{
 		
 	}
 	
-	public static InetAddress[] getNIPAddress(int N) {
+	public InetAddress[] getNIPAddress(int N) {
 		InetAddress[] rst = new InetAddress[N];
 		Random r = new Random();
-		Set<Long> set = new HashSet();
+		Set<Long> set = new HashSet<Long>();
 		for(int i = 0; i < N; i++) {
 			long rand;
 			do {
 				rand = r.nextInt(N);
-			} while (!set.contains(rand));
+			} while (set.contains(rand));
+			System.out.println("random is "+rand);
+			set.add(rand);
 			rst[i] = serverMap.get(rand);
 		}
 		return rst;
 	}
 	
-	public static InetAddress getIPAddressByServID(long serverID) {
+	public InetAddress getIPAddressByServID(long serverID) {
 		return serverMap.get(serverID);
 	}
 	

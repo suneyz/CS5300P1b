@@ -10,10 +10,10 @@ public class Utils {
 	public static final String SPLITTER = "_";
 	public static final String DOMAIN_NAME = "us-west-2.compute.amazonaws.com";
 	//need to figure out where to get these information, may be from simpleDB
-	public static final int N = 5;
-	public static final int W = 4;
-	public static final int WQ = 2;
-	public static final int R = 2;
+	public static final int N = 2;
+	public static final int W = 1;
+	public static final int WQ = 1;
+	public static final int R = 1;
 	public static final String DATE_TIME_FORMAT = "EEE MMM dd HH:mm:ss z yyyy"; //"HH:mm:ss";
 	
 	public static final String[] RESPONSE_FLAGS_READING = new String[]{"SUCCESS", "TIME_OUT", "WRONG_FOUND_VERSION", "NOT_FOUND"};

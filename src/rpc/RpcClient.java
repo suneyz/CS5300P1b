@@ -173,6 +173,8 @@ public class RpcClient {
 	 * */
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
 		if(TEST1)System.out.println("SessionWrite called");
+		System.out.println("inside rpc write:Number of destAddrs is:"+destAddrs.length);
+		System.out.println(destAddrs[0].toString());
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = sessionID; //genCallID(); //TODO: if it is ok to use sessionID 
 		
