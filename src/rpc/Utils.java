@@ -8,6 +8,7 @@ public class Utils {
 	public static final int PROJECT1_PORT_NUMBER = 5300;
 	public static final int MAX_PACKET_LENGTH = 512;
 	public static final String SPLITTER = "_";
+	public static final String DOMAIN_NAME = "us-west-2.compute.amazonaws.com";
 	//need to figure out where to get these information, may be from simpleDB
 	public static final int N = 5;
 	public static final int W = 4;

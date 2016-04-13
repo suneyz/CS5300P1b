@@ -13,7 +13,11 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import session.Session;
 import javax.servlet.RequestDispatcher;
@@ -40,18 +44,20 @@ public class SessionServelet extends HttpServlet{
 	 */
 	private static final long serialVersionUID = 1L;
 	private static ConcurrentHashMap<String, Session> sessionTable;
+	private static ConcurrentHashMap<Long, InetAddress> serverMap;
 	public static final String COOKIE_NAME = "CS5300PROJECT1";
 	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
-	public static final String LOCAL_INFO_FILE = "server_info";
+	public static final String LOCAL_INFO_FILE = "/server_info";
+	public static final String SERVER_MAPPING_FILE = "/server_mapping";
 	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
 	public static final int COOKIE_AGE = 10;
 	
 	private static long sessNum = 0; // sessin number
 	
-	private static long servID = 0; // TODO: change it to read from local file
+	private static long servID = 1; // TODO: change it to read from local file
 	private static long rebootNum = 0; // TODO: change it to read from local file
 	
 	//-------------
@@ -61,11 +67,15 @@ public class SessionServelet extends HttpServlet{
 	
 	public static final String SERVER_0 = "10.148.9.172";
 	public static final String SERVER_1 = "10.132.3.234";
+	public static final String SERVER_2 = "10.132.3.234";
 	
 	public static InetAddress addr0;
 	public static InetAddress addr1;
+	public static InetAddress addr2;
 	
 	public static InetAddress[] addrs = new InetAddress[2];
+	
+
 	
 	//----------------
 	
@@ -90,20 +100,21 @@ public class SessionServelet extends HttpServlet{
 			SessionServelet.rebootNum++;
 		}
 		saveServerInfo();
-		
+		restoreServerMapping();
 		System.out.println("reboot number is: " + rebootNum);
 		
 		// ========
 		
-		try {
-			addr0 = InetAddress.getByName(SERVER_0);
-			addr1 = InetAddress.getByName(SERVER_1);
-			addrs[0] = addr0;
-			addrs[1] = addr1;
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			addr0 = InetAddress.getByName(SERVER_0);
+//			addr1 = InetAddress.getByName(SERVER_1);
+//			addr2 = InetAddress.getByName(SERVER_2);
+//			addrs[0] = addr0;
+//			addrs[1] = addr1;
+//		} catch (UnknownHostException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		// ==========
 	}
 	
@@ -118,6 +129,7 @@ public class SessionServelet extends HttpServlet{
 		// initialization
 		Session session;
 		Cookie currCookie = findCookie(request.getCookies());
+		String locationData;
 		if(TEST) {
 			if(currCookie == null) {
 				System.out.println("No cookie");
@@ -137,6 +149,7 @@ public class SessionServelet extends HttpServlet{
 			if(TEST) {
 				System.out.println("First Time ping the web, rendering a new session......");
 			}
+			addrs = getNIPAddress(Utils.WQ);
 			writeResponse = write(session.getSessionID(), 0, session.getMessage(), session.getExpireTime(), addrs);
 			
 			if(TEST) {
@@ -149,7 +162,8 @@ public class SessionServelet extends HttpServlet{
 			if(TEST) {
 				System.out.println("Have cookie, try to read old session......");
 			}
-			
+			locationData = getLocationDataFromCookie(currCookie);
+			addrs = getIPAddressByLocationData(locationData);
 			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
 			
 			session = genSession(false);
@@ -159,6 +173,7 @@ public class SessionServelet extends HttpServlet{
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
 				System.out.println("====Servelet initializing write call......");
 				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
+				addrs = getNIPAddress(Utils.WQ);
 				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage.trim(), session.getExpireTime(), addrs); // TODO: replace INETADDRESS
 				System.out.println("Hash map size is: " + sessionTable.size());
 				System.out.println("Expire time is: " + session.getExpireTime());
@@ -174,6 +189,7 @@ public class SessionServelet extends HttpServlet{
 		// update coockie
 		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
 		System.out.println("Version Number saved to Cookie is: " + session.getVersionNumber());
+		currCookie.setDomain(Utils.DOMAIN_NAME);
 		currCookie.setMaxAge(COOKIE_AGE);
 		
 		// pass session to jsp file
@@ -202,13 +218,16 @@ public class SessionServelet extends HttpServlet{
 		long versionNumber;
 //		String locationData;
 		Session session;
+		String locationData;
 		Response readResponse;
 		
 		// Check if cookie is expired before button is clicked
 		if(currCookie != null) {
 			sessionID = getSessionIDFromCookie(currCookie);
+			locationData = getLocationDataFromCookie(currCookie);
 			versionNumber = getVersionNumberFromCookie(currCookie);
 //			locationData = getLocationDataFromCookie(currCookie);
+			addrs = getIPAddressByLocationData(locationData);
 			readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
 			session = new Session(sessionID);
 		} else {
@@ -233,7 +252,7 @@ public class SessionServelet extends HttpServlet{
 			if(message != null || !message.equals("")) {
 				session.setMessage(message);
 			}
-			
+			addrs = getNIPAddress(Utils.WQ);
 			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), addrs); //TODO: replace address
 			
 			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
@@ -241,6 +260,7 @@ public class SessionServelet extends HttpServlet{
 			}
 			
 			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
+			currCookie.setDomain(Utils.DOMAIN_NAME);
 			currCookie.setMaxAge(COOKIE_AGE);
 			
 			// forward response and request to jsp 
@@ -404,7 +424,7 @@ public class SessionServelet extends HttpServlet{
 		return servID;
 	}
 	
-	public boolean restoreServerInfo() {
+	private boolean restoreServerInfo() {
 		try (BufferedReader br = new BufferedReader(new FileReader(LOCAL_INFO_FILE)))
 		{
 			String serverID = br.readLine();
@@ -420,7 +440,7 @@ public class SessionServelet extends HttpServlet{
 		
 	}
 	
-	public void saveServerInfo() {
+	private void saveServerInfo() {
 		System.out.println("Saving server information......");
 		List<String> lines = Arrays.asList(String.valueOf(servID), String.valueOf(rebootNum));
 		Path file = Paths.get(LOCAL_INFO_FILE);
@@ -429,5 +449,54 @@ public class SessionServelet extends HttpServlet{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private boolean restoreServerMapping() {
+		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE)))
+		{
+			String currLine;
+			while((currLine = br.readLine()) != null) {
+				
+//		    	String testLine = "\"10\"\"0\"";
+//		    	String newLine = testLine.replace("\"", " ");
+		    	String[] info = currLine.split("\"+");
+//		    	for(String s : info) {
+//		    		System.out.println(s);
+//		    	}
+						
+//				String info[] = newLine.split(SPLITTER);
+				String items[] = info[0].split("+");
+				serverMap.put(Long.parseLong(items[1]), InetAddress.getByName(info[1]));
+			}
+			
+			return true;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+		
+	}
+	
+	public static InetAddress[] getNIPAddress(int N) {
+		InetAddress[] rst = new InetAddress[N];
+		Random r = new Random();
+		Set<Long> set = new HashSet();
+		for(int i = 0; i < N; i++) {
+			long rand;
+			do {
+				rand = r.nextInt(N);
+			} while (!set.contains(rand));
+			rst[i] = serverMap.get(rand);
+		}
+		return rst;
+	}
+	
+	public static InetAddress getIPAddressByServID(long serverID) {
+		return serverMap.get(serverID);
+	}
+	
+	public static InetAddress[] getIPAddressByLocationData(String locationData) {
+		return null;
 	}
 }
