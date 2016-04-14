@@ -20,7 +20,7 @@ public class Session implements Serializable{
 	private static final long serialVersionUID = -5477386214535673194L;
 	public static final String DEFAULT_MESSAGE = "Hello User!";
 	public static final int EXPIRE_TIME = 10;	// In seconds
-	public static final int SESSION_TIMEOUT_SECS = 50;
+	public static final int SESSION_TIMEOUT_SECS = 60 * 5;
 	
 	private long serverID;
 	private String sessionID;

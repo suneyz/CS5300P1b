@@ -238,30 +238,29 @@ public class RpcClient {
 					// a countable packet
 					if( receivedCallID.equals(callID) ){
 						System.out.println("received the same call ID!");
-						numberOfReceivedPkt++;
-						// condition : when no more packet is coming, end the loop
-						if( numberOfReceivedPkt==Utils.N ) {
-							continueListening = false;
-							resultFlag = "WRITING_FAILED";
-							break; //TODO: TO SU LAO BAN: Why not use break???
-						}
+						numberOfReceivedPkt+=1;
 						
-						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3].trim() );
+						Long receivedVersionNumber = Long.parseLong( receivedInfoArray[3].trim() );
 
-//						if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
-							System.out.println("");
+						if( versionNumber==receivedVersionNumber ){
+							System.out.println("In RPC client write loop, received a good response from RPC server");
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
-							//condition to successfully quit looping
-							if(responseNumberForSuccessfulWriting == (Utils.WQ) ){
-								System.out.println("Write success!");
-								continueListening = false;
+							
+							if(responseNumberForSuccessfulWriting == Utils.WQ) {
+								// success
 								resultFlag = "SUCCESS";
 								break;
 							}
+							if(numberOfReceivedPkt == Utils.W && responseNumberForSuccessfulWriting<Utils.WQ){
+								
+			
+								resultFlag = "WRTING_FAILED";
+								break;
 							
-//						}
+							}
+						}
 					}	
 				}
 				
@@ -277,7 +276,13 @@ public class RpcClient {
 		Response res = new Response();
 		res.resStatus = resultFlag;
 		res.resMessage = resultData;
-		res.locationData = String.join(Utils.SPLITTER, locationDataList);
+		if(locationDataList.size() == 1){
+			res.locationData=""+locationDataList.get(0);
+		}else{
+			res.locationData = String.join(Utils.SPLITTER, locationDataList);
+		}
+		
+		System.out.println("In RPC Client, the repsonse location data is:"+res.locationData);
 //		res.session = resultSession;
 		rpcSocket.close();
 		return res;

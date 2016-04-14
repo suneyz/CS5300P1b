@@ -54,14 +54,10 @@ public class SessionServelet extends HttpServlet{
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
-	//public static final String LOCAL_INFO_FILE = "D:/Cornell/16spring/CS5300/p1b/Project1b/WebContent/WEB-INF/server_info.txt";
-	//public static final String SERVER_MAPPING_FILE = "D:/Cornell/16spring/CS5300/p1b/Project1b/WebContent/WEB-INF/server_mapping.txt";
-	//public static final String SERVER_MAPPING_FILE = "/Users/apple/Desktop/test/server_mapping.txt";
-	//public static final String LOCAL_INFO_FILE = "/Users/apple/Desktop/test/server_info.txt";
 	public static final String LOCAL_INFO_FILE = "/server_info.txt";
 	public static final String SERVER_MAPPING_FILE = "/server_mapping.txt";
-	public static final long THREAD_SLEEP_TIME = 1000 * 10;//1000 * 60 * 5;
-	public static final int COOKIE_AGE = 10;
+	public static final long THREAD_SLEEP_TIME = 1000 * 5 * 60 ;//1000 * 60 * 5;
+	public static final int COOKIE_AGE = 60 * 5;
 	
 	private static long sessNum = 0; // sessin number
 	
@@ -135,7 +131,7 @@ public class SessionServelet extends HttpServlet{
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
-		
+		System.out.println("doGet method is called");
 		// initialization
 		Session session;
 		Cookie currCookie = findCookie(request.getCookies());
@@ -177,6 +173,9 @@ public class SessionServelet extends HttpServlet{
 			}
 			locationData = getLocationDataFromCookie(currCookie);
 			addrs = getIPAddressByLocationData(locationData);
+			for(InetAddress addr : addrs) {
+				System.out.println("Location Address: " + addr.getHostAddress());
+			}
 			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
 			
 			session = genSession(false);
@@ -194,6 +193,7 @@ public class SessionServelet extends HttpServlet{
 				session.setMessage(readResponse.resMessage);
 				System.out.println("Version Number updated is: " + updatedVersionNumber);
 				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
+					
 					//TODO: handle the case when write operation fails
 				}
 			}
@@ -223,6 +223,7 @@ public class SessionServelet extends HttpServlet{
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
+		System.out.println("doPost method is called");
 		// initialization
 		String param = request.getParameter("req");
 		String message = request.getParameter("message");
@@ -258,9 +259,7 @@ public class SessionServelet extends HttpServlet{
 		
 		// check the parameter from jsp button
 		if(param.equals("Replace")) {
-			// 
-			
-			
+
 			// update message if input is valid
 			if(message != null || !message.equals("")) {
 				session.setMessage(message);
@@ -270,6 +269,9 @@ public class SessionServelet extends HttpServlet{
 			
 			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
 				session.setVersionNumber(versionNumber + 1);
+				System.out.println("write poeration succseed!Response is correct");
+			}else{
+				System.out.println("**In doPost, write operation failed, false response received!");
 			}
 			
 			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
@@ -444,6 +446,7 @@ public class SessionServelet extends HttpServlet{
 			String rebootNum = br.readLine();
 			SessionServelet.servID = Long.parseLong(serverID);
 			SessionServelet.rebootNum = Long.parseLong(rebootNum);
+			System.out.println("server Info already be read"+SessionServelet.servID);
 			return true;
 
 		} catch (IOException e) {
@@ -458,21 +461,32 @@ public class SessionServelet extends HttpServlet{
 		List<String> lines = Arrays.asList(String.valueOf(servID), String.valueOf(rebootNum));
 		Path file = Paths.get(LOCAL_INFO_FILE);
 		try {
-			Files.write(file, lines, Charset.forName("UTF-8"));
+			Path path = Files.write(file, lines, Charset.forName("UTF-8"));
+			System.out.println(path.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("In saveServerInfo, run into exception");
 		}
+		System.out.println("leaving saveServerInfo()");	
 	}
 	private boolean restoreServerMapping1(){
 		
 		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE))){
 			String currLine;
+			System.out.println("in restoreServerMapping1");
 			while((currLine = br.readLine()) != null) {
-				String serverID = currLine.split(" +")[1].split("_")[1];
+				System.out.println("in restoreServerMaping1 in while loop: currline"+currLine);
+				//String serverID = currLine.split(" +")[1].split("-")[1];
+				String serverIDStr = currLine.split("\\s+")[1];
+				System.out.println("----first time split +");
+				String serverID = serverIDStr.split("-")[1];
+				System.out.println("----second time split +");
+				
+				
 				currLine = br.readLine();
-				String ip = currLine.split(" +")[2];
-				System.out.println("ServerID:¡¡" + serverID);
-				System.out.println("IP: " + ip);
+				String ip = currLine.split("\\s+")[2];
+				System.out.println("ServerID:"+serverID);
+				System.out.println("IP:"+ip);
 				System.out.println(serverMap == null);
 				serverMap.put(Long.parseLong(serverID), InetAddress.getByName(ip));
 			}
@@ -534,7 +548,24 @@ public class SessionServelet extends HttpServlet{
 		return serverMap.get(serverID);
 	}
 	
-	public static InetAddress[] getIPAddressByLocationData(String locationData) {
-		return null;
+	public InetAddress[] getIPAddressByLocationData(String locationData) {
+		//TODO: fix the return
+		InetAddress[] result;
+		if(locationData.length() == 1){
+			Long servID = Long.parseLong(locationData);
+			result = new InetAddress[1];
+			result[0] = serverMap.get(servID);
+			return result;
+		}
+		else{
+			String[] servIDArray = locationData.split(Utils.SPLITTER);
+			int n = servIDArray.length;
+			result = new InetAddress[n];
+			for(int i=0; i<n; i++){
+				Long servID = Long.parseLong(servIDArray[i]);
+				result[i] = serverMap.get(servID);
+			}
+			return result;
+		}
 	}
 }

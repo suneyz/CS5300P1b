@@ -26,12 +26,18 @@ public class Test {
 //			}
 //			return false;
 		
-		System.out.println("running");
-			
-		PrintWriter writer = new PrintWriter("the-file-name.txt", "UTF-8");
-		writer.println("The first line");
-		writer.println("The second line");
-		writer.close();
+//		System.out.println("running");
+//			
+//		PrintWriter writer = new PrintWriter("the-file-name.txt", "UTF-8");
+//		writer.println("The first line");
+//		writer.println("The second line");
+//		writer.close();
+		String test="I   am   good";
+		String result1 = test.split(" +")[0];
+		String result2 = test.split(" +")[1];
+		
+		System.out.println(result1);
+		System.out.println(result2);
 		
 		
 	}

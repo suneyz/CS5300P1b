@@ -98,6 +98,7 @@ public class RpcServer {
 	 * write session message and return true or false
 	 * */
 	 public byte[] sessionWrite(String info) throws ParseException{
+		 System.out.println("In RPC server write, info string is:"+ info);
 		 String[] infoArray = info.split(Utils.SPLITTER);
 		 String requestCallID = infoArray[0];
 		 String sessionID = infoArray[2];
@@ -124,4 +125,6 @@ public class RpcServer {
 		 System.out.println("Returned message from sessionWrite() is: " + result);
 		 return result.getBytes();
 	 }
+	 
+	
 }

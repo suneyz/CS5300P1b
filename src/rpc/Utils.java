@@ -8,11 +8,11 @@ public class Utils {
 	public static final int PROJECT1_PORT_NUMBER = 5300;
 	public static final int MAX_PACKET_LENGTH = 512;
 	public static final String SPLITTER = "_";
-	public static final String DOMAIN_NAME = "us-west-2.compute.amazonaws.com";
+	public static final String DOMAIN_NAME = ".cs2238.bigdata.systems";
 	//need to figure out where to get these information, may be from simpleDB
-	public static final int N = 2;
-	public static final int W = 1;
-	public static final int WQ = 1;
+	public static final int N = 5;
+	public static final int W = 4;
+	public static final int WQ = 3;
 	public static final int R = 1;
 	public static final String DATE_TIME_FORMAT = "EEE MMM dd HH:mm:ss z yyyy"; //"HH:mm:ss";
 	
