@@ -50,41 +50,30 @@ public class SessionServelet extends HttpServlet{
 	private static ConcurrentHashMap<String, Session> sessionTable;
 	private ConcurrentHashMap<Long, InetAddress> serverMap;
 	public static final String COOKIE_NAME = "CS5300PROJECT1";
-	public static final String LOG_OUT = "/CS5300Project1/logout.jsp";
+	public static final String LOG_OUT = "/logout.jsp";
+	public static final String ERROR_HANDLER = "/errorReprot.jsp";
 	public static final String SPLITTER = "/";
 	public static final String SESSIONID_SPLITTER = "-";
 	public static final String INVALID_INSTRUCTION = "Invalid input!";
-	public static final String LOCAL_INFO_FILE = "/server_info.txt";
+	//public static final String LOCAL_INFO_FILE = "D:/Cornell/16spring/CS5300/p1b/CS5300Project1/WebContent/WEB-INF/server_info.txt";
+	//public static final String SERVER_MAPPING_FILE = "D:/Cornell/16spring/CS5300/p1b/CS5300Project1/WebContent/WEB-INF/server_mapping.txt";
 	public static final String SERVER_MAPPING_FILE = "/server_mapping.txt";
+	public static final String LOCAL_INFO_FILE = "/server_info.txt";
 	public static final long THREAD_SLEEP_TIME = 1000 * 5 * 60 ;//1000 * 60 * 5;
-	public static final int COOKIE_AGE = 60 * 5;
+//	public static final int COOKIE_AGE = 60 * 5;
+	public static final int COOKIE_AGE = 20 * 1;
 	
 	private static long sessNum = 0; // sessin number
 	
-	private static long servID = 1; // TODO: change it to read from local file
-	private static long rebootNum = 0; // TODO: change it to read from local file
+	private static long servID; // serverID
+	private static long rebootNum; // rebootNum
+	public static InetAddress[] addrs;
 	
-	//-------------
-	// BELOW ARE TEST PARAMETER NEED TO BE CHANGED
-	
-	public static final boolean TEST = true;
-	
-	public static final String SERVER_0 = "10.148.9.172";
-	public static final String SERVER_1 = "10.132.3.234";
-	public static final String SERVER_2 = "10.132.3.234";
-	
-	public static InetAddress addr0;
-	public static InetAddress addr1;
-	public static InetAddress addr2;
-	
-	public static InetAddress[] addrs = new InetAddress[2];
-	
-
-	
-	//----------------
-	
-	
-	
+	/*
+	 * (non-Javadoc)
+	 * @see javax.servlet.GenericServlet#init()
+	 * Also call initializeRPCServer to start RPC server thread
+	 */
 	@Override
 	public void init() throws ServletException {
 		// TODO Auto-generated method stub
@@ -95,6 +84,7 @@ public class SessionServelet extends HttpServlet{
 	/*
 	 * Constructor
 	 * Create cleanup daemon thread
+	 * Read in local files
 	 */
 	public SessionServelet() {
 		sessionTable = new ConcurrentHashMap<>();
@@ -105,23 +95,8 @@ public class SessionServelet extends HttpServlet{
 		}
 		serverMap = new ConcurrentHashMap();
 		saveServerInfo();
-		restoreServerMapping1();
+		restoreServerMapping();
 		System.out.println("reboot number is: " + rebootNum);
-		
-		
-		// ========
-		
-//		try {
-//			addr0 = InetAddress.getByName(SERVER_0);
-//			addr1 = InetAddress.getByName(SERVER_1);
-//			addr2 = InetAddress.getByName(SERVER_2);
-//			addrs[0] = addr0;
-//			addrs[1] = addr1;
-//		} catch (UnknownHostException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		// ==========
 	}
 	
 	/*
@@ -131,88 +106,107 @@ public class SessionServelet extends HttpServlet{
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
-		System.out.println("doGet method is called");
+		System.out.println("Refresh goes in here and doGet method is called");
 		// initialization
 		Session session;
 		Cookie currCookie = findCookie(request.getCookies());
 		String locationData;
-		if(TEST) {
-			if(currCookie == null) {
-				System.out.println("No cookie");
-			} else {
-				System.out.println("Have cookie, cookie data: " + currCookie.getValue());
-			}
-		}
 		String sessionID = getSessionIDFromCookie(currCookie);
 		Response writeResponse = null;
+		String servIDOfLastFoundData = "";
 		
-		// check if there is an existing session
 		if(sessionID == null) {
-			// no existing session, render a new session
+			
+			// no existing session, simply call write method
 			
 			session = genSession(true);
-			
-			if(TEST) {
-				System.out.println("First Time ping the web, rendering a new session......");
-			}
+
 			addrs = getNIPAddress(Utils.WQ);
 			
 			System.out.println("Preparing for PRC write : addrs generated");
 			System.out.println(addrs[0].toString());
 			writeResponse = write(session.getSessionID(), 0, session.getMessage(), session.getExpireTime(), addrs);
-			
-			if(TEST) {
-				System.out.println("Finish render new session.");
-			}
+		    
 		} else {
 			
 			// there is an existing session, create a new session with higher versionNumber
-			
-			if(TEST) {
-				System.out.println("Have cookie, try to read old session......");
-			}
+            System.out.println("there is existing session according to the cookie");
 			locationData = getLocationDataFromCookie(currCookie);
 			addrs = getIPAddressByLocationData(locationData);
-			for(InetAddress addr : addrs) {
-				System.out.println("Location Address: " + addr.getHostAddress());
-			}
-			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs); // TODO: replace INETADDRESS
+			
+			Response readResponse = read(sessionID, getVersionNumberFromCookie(currCookie), addrs);
 			
 			session = genSession(false);
 			session.setSessionID(sessionID);
 			session.setServerID(servID);
-			System.out.println("Read response status is: " + readResponse.resStatus);
+			
 			if(readResponse != null && readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])) {
-				System.out.println("====Servelet initializing write call......");
+				
+				// reading is successful, call write method
+				servIDOfLastFoundData = readResponse.serverID;
 				Long updatedVersionNumber = getVersionNumberFromCookie(currCookie)+1;
-				addrs = getNIPAddress(Utils.WQ);
-				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage.trim(), session.getExpireTime(), addrs); // TODO: replace INETADDRESS
-				System.out.println("Hash map size is: " + sessionTable.size());
-				System.out.println("Expire time is: " + session.getExpireTime());
+				
 				session.setVersionNumber(updatedVersionNumber);
 				session.setMessage(readResponse.resMessage);
-				System.out.println("Version Number updated is: " + updatedVersionNumber);
-				if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
-					
-					//TODO: handle the case when write operation fails
-				}
+				
+				addrs = getNIPAddress(Utils.WQ);
+				
+				writeResponse = write(sessionID, updatedVersionNumber, readResponse.resMessage.trim(), session.getExpireTime(), addrs); 
+								
+			}
+			
+			else{
+				// reading failed: render the reading fail page for user with specified message
+				// Cookies would not be updated, and call return
+				
+				String errorInfo = "Writing failed for the reason: "+readResponse.resStatus;
+				request.setAttribute("error", errorInfo);
+				response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
+				RequestDispatcher dispacher = request.getRequestDispatcher(ERROR_HANDLER);
+				dispacher.forward(request, response);
+				return;
 			}
 		}
 		
-		// update coockie
-		currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
-		System.out.println("Version Number saved to Cookie is: " + session.getVersionNumber());
-		currCookie.setDomain(Utils.DOMAIN_NAME);
-		currCookie.setMaxAge(COOKIE_AGE);
 		
-		// pass session to jsp file
-		request.setAttribute("session", session);
-		request.setAttribute("currTime", Calendar.getInstance().getTime());
-		request.setAttribute("cookieID", currCookie.getValue());
-		response.addCookie(currCookie);
-		response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
-		RequestDispatcher dispacher = request.getRequestDispatcher("/");
-		dispacher.forward(request, response);
+		// check writing response before updating and sending back cookies
+		
+		if(!writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
+			
+			//failed writing, forward to error page
+			String errorInfo = "Error happended when updating information at the server: "+writeResponse.resStatus;
+			request.setAttribute("error", errorInfo);
+			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
+			RequestDispatcher dispacher = request.getRequestDispatcher(ERROR_HANDLER);
+			dispacher.forward(request, response);
+		}
+		else{
+			
+			// successful writing: update cookie
+			
+			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
+			System.out.println("Version Number saved to Cookie is: " + session.getVersionNumber());
+			currCookie.setDomain(Utils.DOMAIN_NAME);
+			currCookie.setMaxAge(COOKIE_AGE);
+			
+			// pass session to jsp file
+			request.setAttribute("session", session);
+			request.setAttribute("currTime", Calendar.getInstance().getTime());
+			
+			
+			request.setAttribute("cookieValue", currCookie.getValue());
+			request.setAttribute("cookieDomain", Utils.DOMAIN_NAME);
+			request.setAttribute("MetaData",writeResponse.locationData);
+			
+			request.setAttribute("SvrID", servID);
+			request.setAttribute("reboot_num", rebootNum);
+			request.setAttribute("srvID_session_data_found", servIDOfLastFoundData);
+			response.addCookie(currCookie);
+			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
+			RequestDispatcher dispacher = request.getRequestDispatcher("/");
+			dispacher.forward(request, response);
+		}
+		
 	}
 	
 	/*
@@ -224,26 +218,43 @@ public class SessionServelet extends HttpServlet{
 	public void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws ServletException, IOException {
 		System.out.println("doPost method is called");
+		
 		// initialization
 		String param = request.getParameter("req");
 		String message = request.getParameter("message");
 		Cookie currCookie = findCookie(request.getCookies());
 		String sessionID;
 		long versionNumber;
-//		String locationData;
 		Session session;
 		String locationData;
 		Response readResponse;
+		String servIDOfLastFoundData = "";
 		
 		// Check if cookie is expired before button is clicked
 		if(currCookie != null) {
 			sessionID = getSessionIDFromCookie(currCookie);
 			locationData = getLocationDataFromCookie(currCookie);
 			versionNumber = getVersionNumberFromCookie(currCookie);
-//			locationData = getLocationDataFromCookie(currCookie);
 			addrs = getIPAddressByLocationData(locationData);
-			readResponse = read(sessionID, versionNumber, addrs); //TODO: replace address
+			readResponse = read(sessionID, versionNumber, addrs);
+			// render error page if reading fails
+			
+			if(readResponse == null || !readResponse.resStatus.equals(Utils.RESPONSE_FLAGS_READING[0])){
+				
+			   String errorInfo = "Retreving message failed for the reason: "+readResponse.resStatus;
+			   System.out.println("error info: "+errorInfo);
+			   request.setAttribute("error", errorInfo);
+			   response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
+			   RequestDispatcher dispacher = request.getRequestDispatcher(ERROR_HANDLER);
+			   dispacher.forward(request, response);
+			   
+			   return;
+			   
+			}
+			// reading succeed, generate a new session to be passed into jsp for future communication
 			session = new Session(sessionID);
+			servIDOfLastFoundData = readResponse.serverID;
+			
 		} else {
 			session = genSession(true);
 			sessionID = session.getSessionID();
@@ -252,12 +263,7 @@ public class SessionServelet extends HttpServlet{
 		}
 		
 		
-		
-		
-		
-		//TODO: need to check the result of read!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		
-		// check the parameter from jsp button
+		// check the request type from the button being clicked in jsp file
 		if(param.equals("Replace")) {
 
 			// update message if input is valid
@@ -265,13 +271,25 @@ public class SessionServelet extends HttpServlet{
 				session.setMessage(message);
 			}
 			addrs = getNIPAddress(Utils.WQ);
-			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), addrs); //TODO: replace address
+			Response writeResponse = write(sessionID, versionNumber+1, message, session.getExpireTime(), addrs); 
 			
 			if(writeResponse.resStatus.equals(Utils.RESPONSE_FLAGS_WRITING[0])) {
+				
+				//writing succeed
+				
 				session.setVersionNumber(versionNumber + 1);
-				System.out.println("write poeration succseed!Response is correct");
+				
 			}else{
-				System.out.println("**In doPost, write operation failed, false response received!");
+				
+				// writing failed, render error display page
+				
+				String errorInfo = "Updating data failed at the server for the reason: "+writeResponse.resStatus;
+				request.setAttribute("error", errorInfo);
+				response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
+				RequestDispatcher dispacher = request.getRequestDispatcher(ERROR_HANDLER);
+				dispacher.forward(request, response);
+				return;
+
 			}
 			
 			currCookie = new Cookie(COOKIE_NAME, genCookieIDFromSession(session, writeResponse.locationData));
@@ -281,11 +299,17 @@ public class SessionServelet extends HttpServlet{
 			// forward response and request to jsp 
 			request.setAttribute("session", session);
 			request.setAttribute("currTime", Calendar.getInstance().getTime());
-			request.setAttribute("cookieID", currCookie.getValue());	
+			request.setAttribute("cookieValue", currCookie.getValue());
+			request.setAttribute("cookieDomain", Utils.DOMAIN_NAME);
+			request.setAttribute("MetaData",writeResponse.locationData);
+			request.setAttribute("SvrID", servID);
+			request.setAttribute("reboot_num", rebootNum);
+			request.setAttribute("srvID_session_data_found", servIDOfLastFoundData);
 			response.addCookie(currCookie);
 			response.setHeader("Cache-Control", "private, no-store, no-cache, must-revalidate");
 			RequestDispatcher dispatcher = request.getRequestDispatcher("/");
 			dispatcher.forward(request, response);
+			
 		} else if (param.equals("Logout")) {
 			// handle logout button
 			
@@ -303,9 +327,8 @@ public class SessionServelet extends HttpServlet{
 		
 	}
 	
-	public static String genTableKey(String sessionID, String versionNum){
-		return sessionID + SPLITTER + versionNum;
-	}
+	
+	
 	
 	/*
 	 * This method is to search for cookie with the correct cookie name and the session id is contained in the table
@@ -342,10 +365,20 @@ public class SessionServelet extends HttpServlet{
 		return cookie == null ? null : cookie.getValue().split(SPLITTER)[0];
 	}
 	
+	/*
+	 * Get version number from input cookie
+	 * @param: Cookie cookie
+	 * @return Long: versionNumber
+	 */
 	private Long getVersionNumberFromCookie(Cookie cookie) {
 		return cookie == null ? null : Long.parseLong(cookie.getValue().split(SPLITTER)[1]);
 	}
 	
+	/*
+	 * Get location data from cookie
+	 * @param: Cookie cookie
+	 * @return: String location data
+	 */
 	private String getLocationDataFromCookie(Cookie cookie) {
 		return cookie == null ? null : cookie.getValue().split(SPLITTER)[2];
 	}
@@ -357,6 +390,33 @@ public class SessionServelet extends HttpServlet{
 	 */
 	private String genCookieIDFromSession(Session session, String locationData) {
 		return session.getSessionID() + SPLITTER + session.getVersionNumber() + SPLITTER + locationData;
+	}	
+
+	/*
+	 * 
+	 */
+	public static Session getSessionByIDVersion(String sessionID, String versionNumber){
+		return sessionTable.get(genTableKey(sessionID, versionNumber));
+	}
+	
+	public static void addSessionToTable(Session session) {
+		sessionTable.put(genTableKey(session.getSessionID(), String.valueOf(session.getVersionNumber())), session);
+	}
+	
+	private Response read(String sessionID, long versionNumber, InetAddress[] destAdds) throws IOException {
+		return RpcClient.sessionReadClient(sessionID, versionNumber, destAdds);
+	}
+	
+	private Response write(String sessionID, long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException {
+		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, date, destAddrs);
+	}
+
+	public static long getServID(){
+		return servID;
+	}
+	
+	public static String genTableKey(String sessionID, String versionNum){
+		return sessionID + SPLITTER + versionNum;
 	}
 
 	/*
@@ -386,17 +446,17 @@ public class SessionServelet extends HttpServlet{
 	 * Perform session table clean up operation 
 	 */
 	private synchronized void cleanup() {
-		System.out.println("Cleanning expired session......");
 		for(String sessionID : sessionTable.keySet()) {
 			Calendar cal = Calendar.getInstance();
 			if(sessionTable.get(sessionID).getExpireTime().before(cal.getTime())) {
-				System.out.println("Cleaning session with SessionID: " + sessionID);
-				System.out.println("Its expire time is: " + sessionTable.get(sessionID).getExpireTime());
 				sessionTable.remove(sessionID);
 			}
 		}
 	}
 	
+	/*
+	 * Initialize RPC server thread, must be called in constructor
+	 */
 	private void initializeRpcServer() {
 		Thread t = new Thread(new Runnable(){
 
@@ -419,26 +479,9 @@ public class SessionServelet extends HttpServlet{
 		t.start();
 	}
 	
-	public static Session getSessionByIDVersion(String sessionID, String versionNumber){
-		return sessionTable.get(genTableKey(sessionID, versionNumber));
-	}
-	
-	public static void addSessionToTable(Session session) {
-		sessionTable.put(genTableKey(session.getSessionID(), String.valueOf(session.getVersionNumber())), session);
-	}
-	
-	private Response read(String sessionID, long versionNumber, InetAddress[] destAdds) throws IOException {
-		return RpcClient.sessionReadClient(sessionID, versionNumber, destAdds);
-	}
-	
-	private Response write(String sessionID, long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException {
-		return RpcClient.sessionWriteClient(sessionID, versionNumber, message, date, destAddrs);
-	}
-
-	public static long getServID(){
-		return servID;
-	}
-	
+	/*
+	 * Restore server information from local file
+	 */
 	private boolean restoreServerInfo() {
 		try (BufferedReader br = new BufferedReader(new FileReader(LOCAL_INFO_FILE)))
 		{
@@ -456,8 +499,10 @@ public class SessionServelet extends HttpServlet{
 		
 	}
 	
+	/*
+	 * Save server information into local file
+	 */
 	private void saveServerInfo() {
-		System.out.println("Saving server information......");
 		List<String> lines = Arrays.asList(String.valueOf(servID), String.valueOf(rebootNum));
 		Path file = Paths.get(LOCAL_INFO_FILE);
 		try {
@@ -465,29 +510,24 @@ public class SessionServelet extends HttpServlet{
 			System.out.println(path.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("In saveServerInfo, run into exception");
 		}
-		System.out.println("leaving saveServerInfo()");	
 	}
-	private boolean restoreServerMapping1(){
+	
+	/*
+	 * Restore server mapping from local file
+	 */
+	private boolean restoreServerMapping(){
 		
 		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE))){
 			String currLine;
-			System.out.println("in restoreServerMapping1");
 			while((currLine = br.readLine()) != null) {
-				System.out.println("in restoreServerMaping1 in while loop: currline"+currLine);
-				//String serverID = currLine.split(" +")[1].split("-")[1];
 				String serverIDStr = currLine.split("\\s+")[1];
-				System.out.println("----first time split +");
+				//String serverIDStr = currLine.split(" +")[1];
 				String serverID = serverIDStr.split("-")[1];
-				System.out.println("----second time split +");
-				
-				
+
 				currLine = br.readLine();
 				String ip = currLine.split("\\s+")[2];
-				System.out.println("ServerID:"+serverID);
-				System.out.println("IP:"+ip);
-				System.out.println(serverMap == null);
+				//String ip = currLine.split(" +")[2];
 				serverMap.put(Long.parseLong(serverID), InetAddress.getByName(ip));
 			}
 			
@@ -497,37 +537,12 @@ public class SessionServelet extends HttpServlet{
 		
 		return false;
 	}
-	
-	private boolean restoreServerMapping() {
-		try (BufferedReader br = new BufferedReader(new FileReader(SERVER_MAPPING_FILE)))
-		{
-			String currLine;
-			while((currLine = br.readLine()) != null) {
-				 
-				
-				
-//		    	String testLine = "\"10\"\"0\"";
-//		    	String newLine = testLine.replace("\"", " ");
-		    	
-//		    	for(String s : info) {
-//		    		System.out.println(s);
-//		    	}
-						
-//				String info[] = newLine.split(SPLITTER);
-				String[] info = currLine.split("\"+");
-				String items[] = info[0].split("+");
-				serverMap.put(Long.parseLong(items[1]), InetAddress.getByName(info[1]));
-			}
-			
-			return true;
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return false;
-		
-	}
-	
+	/*
+	 * Get n ip addresses randomly
+	 * @param: int N 
+	 * @return InetAddress[]
+	 */
 	public InetAddress[] getNIPAddress(int N) {
 		InetAddress[] rst = new InetAddress[N];
 		Random r = new Random();
@@ -544,12 +559,21 @@ public class SessionServelet extends HttpServlet{
 		return rst;
 	}
 	
+	/*
+	 * Get IP address from input server ID
+	 * @param: long: server ID
+	 * @return: InetAddress
+	 */
 	public InetAddress getIPAddressByServID(long serverID) {
 		return serverMap.get(serverID);
 	}
 	
+	/*
+	 * Get IP address by input location data
+	 * @param: String: location Data
+	 * @return: InetAddress[]
+	 */
 	public InetAddress[] getIPAddressByLocationData(String locationData) {
-		//TODO: fix the return
 		InetAddress[] result;
 		if(locationData.length() == 1){
 			Long servID = Long.parseLong(locationData);

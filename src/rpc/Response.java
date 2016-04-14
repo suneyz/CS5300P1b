@@ -5,4 +5,5 @@ public class Response {
     //public DatagramPacket resPkt;
     public String resMessage;
     public String locationData;// join by "_"
+    public String serverID;
 }

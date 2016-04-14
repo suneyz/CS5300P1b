@@ -89,7 +89,8 @@ public class RpcServer {
 		
 		byte[] outBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		
-		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, String.valueOf(requestVersionNumber), readMessage) ).getBytes();
+		outBuf = String.join(Utils.SPLITTER, Arrays.asList(callID, sessionID, String.valueOf(requestVersionNumber), readMessage, 
+				 String.valueOf(SessionServelet.getServID()) )).getBytes();
 		System.out.println("outBuf is : " + outBuf);
 		return outBuf;
 	}

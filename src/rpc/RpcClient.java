@@ -17,41 +17,39 @@ import rpc.Utils.*;
 import session.Session;
 
 public class RpcClient {
-
-	private static final boolean TEST1 = true;
-	/*method:generate a new unique callIDs
-	 * 
-	 */
-	public static String genCallID(){
-		String resultID = UUID.randomUUID().toString();
-		resultID.replace(Utils.SPLITTER, "\\");
-		return resultID;
-	}
 	
-	/*method:SessionReadClient
-	 * 
+	/*
+	 * generate a new unique callIDs
+	 */
+//	public static String genCallID(){
+//		String resultID = UUID.randomUUID().toString();
+//		resultID.replace(Utils.SPLITTER, "\\");
+//		return resultID;
+//	}
+	
+	/*
+	 * SessionReadClient: send read request and handle response from RPC server
+	 * @param: String sessionID; Long versionNumber; InetAddress[] destAddrs
+	 * @return Response
 	 */
 	public static Response sessionReadClient(String sessionID, Long versionNumber, InetAddress[] destAdds) throws IOException{
 		DatagramSocket rpcSocket = new DatagramSocket();
 		String callID = sessionID; //genCallID();  //TODO: if it is ok to use sessionID
 		String resultMessage="";
 		String resultStatus="";
+		String servIDOfReceivedData="";
 		
 		String sentInfo = String.join(Utils.SPLITTER, Arrays.asList(callID, Utils.OPERATION_SESSION_READ, sessionID, String.valueOf(versionNumber) ));
 		byte[] outBuf = sentInfo.getBytes();
-		System.out.println("---Client sent info "+sentInfo);
-		
 		
 		//TODO: figure out whether this is Parallel or Sequential
 		for(InetAddress destArr : destAdds){
-			System.out.println("--Client Sending Request");
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destArr, Utils.PROJECT1_PORT_NUMBER);
 			rpcSocket.send(sendPkt);
 		}
 		byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];
 		DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
-		
-		System.out.println("--Client start waiting for res");
+
 		try{
 			boolean continueListening = true;
 			//record the number of received response, jump out before timeout when all responses has been received
@@ -64,14 +62,12 @@ public class RpcClient {
 				
 				//receive method will be blocked while no packet arriving, but the following won't be,
 				//so condition-check is necessary
-				System.out.println("--Client_Waiting_For_Server");
+				System.out.println("--Client_Reading_Waiting_For_Server");
 				rpcSocket.receive(recvPkt);
-				System.out.println("--Client_Received_Pakcet_FROM_Server");
+				System.out.println("--Client_Reading_Received_Pakcet_FROM_Server");
 				//Since we are expecting different packet from N instances when writing, the address of each of 
-				// the arriving packet should be different
-				
-//				if( recvPkt.getAddress()!=null &&( lastReceivedInetAddr== null || 
-//						!lastReceivedInetAddr.equals(recvPkt.getAddress()) )   ){
+				//the arriving packet should be different
+
 				if( recvPkt.getAddress()!=null) {
 					System.out.println("--Client_Processing_Pakcet_FROM_Server");
 					lastReceivedInetAddr = recvPkt.getAddress();
@@ -83,49 +79,21 @@ public class RpcClient {
 						// TODO: Handle not found case here.
 						System.out.println("NOT FOUND!!!!!!");
 					}
-					System.out.println("Received info is: " + receivedInfo);
+                    System.out.println("RPC read received string :"+receivedInfo);
 					String[] receivedInfoArray = receivedInfo.split(Utils.SPLITTER); 
 					String receivedCallID = receivedInfoArray[0];
-					//String receivedReadResult = receivedInfoArray[1];
-					//String receivedSessionID = receivedInfoArray[2];
 					String receivedSessionID = receivedInfoArray[1];
 					
 					//A successful read: same callID, a SessionFound status flag and versionNumber+1;
 					
-					//if( receivedCallID.equals(callID) && (true||receivedSessionID.equals(sessionID)) ){
 					if( receivedCallID.equals(callID) ){	
 						numberOfReceivedPkt++;
 						
-						/*if(receivedReadResult.equals("1")){
-							
-							Long receivedVersionNumber = Long.parseLong(receivedInfoArray[3]);
-							if( receivedVersionNumber == 0 || versionNumber+1==receivedVersionNumber ){
-								resultMessage = "SUCCESS";
-								resultData = receivedInfoArray[4];
-								
-								// if a success response has been received, stop the looping which means stop listening
-								continueListening = false;
-							}
-							else{
-								resultMessage = "WRONG_FOUND_VERSION";
-								
-							}
-						}*/
-						System.out.println("--Client : received packet got the right callID");
-						
-						if(TEST1) {
-							for(int i = 0; i < receivedInfoArray.length; i++) {
-								System.out.println("Received information array " + i + " content: " + receivedInfoArray[i]);
-							}
-						}
-						
 						Long receivedVersionNumber = Long.parseLong(receivedInfoArray[2]);
-						System.out.println("--Client: receivedVersionNumber: "+receivedVersionNumber+", versionNumber :"+versionNumber);
-						if( versionNumber==receivedVersionNumber || TEST1&&receivedVersionNumber==0){
-							System.out.println("--Client:Got the right version number");
+						if( versionNumber==receivedVersionNumber || receivedVersionNumber==0){
 							resultStatus = "SUCCESS";
+							servIDOfReceivedData=receivedInfoArray[4];
 							resultMessage = receivedInfoArray[3];
-							System.out.println("resultMessage in client read is: " + resultMessage);
 							// if a success response has been received, stop the looping which means stop listening
 							continueListening = false;
 						}
@@ -133,8 +101,6 @@ public class RpcClient {
 							resultStatus = "WRONG_FOUND_VERSION";
 							
 						}
-						
-						//no action for wrong response
 					}
 					
 				}
@@ -154,10 +120,11 @@ public class RpcClient {
 		}
 		
 		//generate response and return
-		
+		System.out.println("leaving RPC client read, response status is :"+resultStatus);
 		Response res = new Response();
 		res.resStatus = resultStatus;
 		res.resMessage = resultMessage;
+		res.serverID = servIDOfReceivedData;
 		rpcSocket.close();
 		return res;
 	}
@@ -168,15 +135,15 @@ public class RpcClient {
 	}
 	
 	
-	/*method:SessionWriteClient
-	 * 
-	 * */
+	/*
+	 * SessionWriteClient: Send write request and handle response from RPC server
+	 * @param: String sessionID; Long versionNumber; String message; Date date; InetAddress[] destAddrs
+	 * @return: Response
+	 */
 	public static Response sessionWriteClient(String sessionID, Long versionNumber, String message, Date date, InetAddress[] destAddrs) throws IOException{
-		if(TEST1)System.out.println("SessionWrite called");
-		System.out.println("inside rpc write:Number of destAddrs is:"+destAddrs.length);
-		System.out.println(destAddrs[0].toString());
+
 		DatagramSocket rpcSocket = new DatagramSocket();
-		String callID = sessionID; //genCallID(); //TODO: if it is ok to use sessionID 
+		String callID = sessionID; 
 		
 		SimpleDateFormat sdf = new SimpleDateFormat(Utils.DATE_TIME_FORMAT);
 		String expireTimeStr = sdf.format(date);
@@ -189,12 +156,10 @@ public class RpcClient {
 		byte[] outBuf = sentInfo.getBytes();
 		// currently assume the InetAddress[] to be M ip randomly chosen from N instances
 		for(InetAddress destAddr : destAddrs){
-			System.out.println("Client sending packet to server with IP: " + destAddr.getHostAddress());
 			DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, destAddr, Utils.PROJECT1_PORT_NUMBER);
 			rpcSocket.send(sendPkt);
 		}
-		
-		
+
 		// listening to response from bricks
 		
 		byte[] inBuf = new byte[Utils.MAX_PACKET_LENGTH];
@@ -203,7 +168,7 @@ public class RpcClient {
 		String resultData="";
 		ArrayList <String> locationDataList = new ArrayList<String>();
 		boolean continueListening = true;
-	    //TODO: rpc.setSoTimeout();
+	    //TODO: rpc.setSocketTimeout();
 		try{
 			
 			InetAddress lastReceivedAddress = null;
@@ -212,19 +177,11 @@ public class RpcClient {
 			
 			do{
 				recvPkt.setLength(inBuf.length);
-				System.out.println("Client Waiting for coming packet");
 				rpcSocket.receive(recvPkt);	
-				System.out.println("Client-packet coming!!!");
-				System.out.println("Client-packet data is: " + new String(recvPkt.getData()));
 				//execute when packets are actually coming
-				
-//				if(recvPkt.getAddress()!=null && (lastReceivedAddress == null || 
-//						!lastReceivedAddress.equals(recvPkt.getAddress()) )){
 					
 				if(recvPkt.getAddress()!=null) {
-					System.out.println("The data received is not null!");
 					lastReceivedAddress = recvPkt.getAddress();
-					
 					byte[] receivedByteArray = recvPkt.getData();
 					String receivedInfo = new String(receivedByteArray);
 					String[] receivedInfoArray = receivedInfo.split(Utils.SPLITTER); 
@@ -233,17 +190,15 @@ public class RpcClient {
 					String receivedSessionID = receivedInfoArray[2];
 					
 					//A successful write: same callID, unchanged SessionID, versionNumber+1 or versionNumber = 0;
-					//Difference is : we want ¡¾WQ¡¿ successful writes!
+					//Difference is : we want successful writes!
 					
 					// a countable packet
 					if( receivedCallID.equals(callID) ){
-						System.out.println("received the same call ID!");
 						numberOfReceivedPkt+=1;
 						
 						Long receivedVersionNumber = Long.parseLong( receivedInfoArray[3].trim() );
 
 						if( versionNumber==receivedVersionNumber ){
-							System.out.println("In RPC client write loop, received a good response from RPC server");
 							// a countable successful packet
 							responseNumberForSuccessfulWriting++;
 							locationDataList.add(receivedServID);
@@ -254,8 +209,6 @@ public class RpcClient {
 								break;
 							}
 							if(numberOfReceivedPkt == Utils.W && responseNumberForSuccessfulWriting<Utils.WQ){
-								
-			
 								resultFlag = "WRTING_FAILED";
 								break;
 							
@@ -267,7 +220,7 @@ public class RpcClient {
 			}while(continueListening);
 			
 		} catch(SocketTimeoutException stoe){
-			// timeout ??? Do we need to set the timeout here?
+			//TODO: timeout ??? Do we need to set the timeout here?
 			recvPkt = null;
 			resultFlag = "TIME_OUT";
 					
@@ -277,17 +230,20 @@ public class RpcClient {
 		res.resStatus = resultFlag;
 		res.resMessage = resultData;
 		if(locationDataList.size() == 1){
-			res.locationData=""+locationDataList.get(0);
+			res.locationData = locationDataList.get(0);
 		}else{
 			res.locationData = String.join(Utils.SPLITTER, locationDataList);
 		}
-		
-		System.out.println("In RPC Client, the repsonse location data is:"+res.locationData);
-//		res.session = resultSession;
+		System.out.println("leaving RPC client write, response status is :"+res.resStatus);
 		rpcSocket.close();
 		return res;
 	}
 	
+	/*
+	 * Construct session from information string received from RPC server
+	 * @param: String information
+	 * @return: Session
+	 */
 	public static Session getSessionFromTransferredString(String info) {
 		String[] infoArray = info.split(Utils.SPLITTER);
 		Session session = new Session(infoArray[2], infoArray[4]);
